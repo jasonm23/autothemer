@@ -18,54 +18,79 @@
 Contains the color palette and the list of faces most recently
 customized using `autothemer-defautotheme'.")
 
-(defun autothemer--reduced-spec-to-facespec (reduced-spec)
-  "Convert REDUCED-SPEC into a face spec.
-E.g., (button (:underline t :foreground red))
--> `(button ((t (:underline ,t :foreground ,red))))."
+(defun autothemer--reduced-spec-to-facespec (category reduced-spec)
+  "Convert REDUCED-SPEC into a face spec for CATEGORY.
+E.g., (autothemer--reduced-spec-to-facespec '(min-colors 60) 
+'(button (:underline t :foreground red)))
+-> `(button (((min-colors 60) (:underline ,t :foreground ,red))))."
   (let* ((face (elt reduced-spec 0))
          (properties (elt reduced-spec 1))
-         (spec (autothemer--demote-heads `(list (t ,properties)))))
+         (spec (autothemer--demote-heads `(list (,category ,properties)))))
     `(list ',face ,spec)))
 
 (defun autothemer--demote-heads (expr)
   "Demote every list head within EXPR by one element.
 E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g))."
-  (mapcar (lambda (it) (if (and (listp it) (not (eq (car it) 'quote)))
-                           `(list ,@(autothemer--demote-heads it)) it))
-          expr))
+  (if (listp expr)
+      `(list ,@(mapcar (lambda (it) (if (and (listp it) (not (eq (car it) 'quote)))
+                                        (autothemer--demote-heads it) it))
+                       expr))
+    expr))
 
 ;;;###autoload
-(defmacro autothemer-defautotheme (name description colors reduced-specs &rest body)
+(defmacro autothemer-defautotheme (name description palette reduced-specs &rest body)
   "Define a theme NAME with description DESCRIPTION.
 A set of color definitions COLORS can be used as let-like
 bindings within both the REDUCED-SPECS and the arbitrary BODY.
 As an example, the following snippet defines a theme named
 useless-theme that customizes the faces button and error
-and prints the color value #550000.
-
-(autothemer-defautotheme useless-theme \"This is a truly useless theme.\"
-                         ((red \"#550000\") (orange \"DarkGoldenrod4\"))
-                         ((error (:underline t :foreground red :weight 'demibold))
-                          (button (:box nil :background orange)))
-                         (print red))"
-  (let ((temp-defined-colors (make-symbol "defined-colors"))
-        (temp-color-structs (make-symbol "color-structs")))
-    `(let* (,@colors)
-       (deftheme ,name ,description)
-       (setq ,temp-defined-colors
-             (list ,@(--map (list 'list `',(car it) (car it)) colors)))
-       (setq ,temp-color-structs
-             (cl-loop for (colorname color) in ,temp-defined-colors
-                      collect (make-autothemer--color :name colorname
-                                                      :value color)))
-       (setq autothemer--current-theme
-             (make-autothemer--theme
-              :colors ,temp-color-structs
-              :defined-faces (list ,@(--map `',(car it) reduced-specs))))
-       ,@body
-       (custom-theme-set-faces ',name
-                               ,@(-map 'autothemer--reduced-spec-to-facespec reduced-specs)))))
-
+and prints the color value #550000."
+  (let* ((face-names (-map #'car reduced-specs))
+         (color-names (-map #'car (-drop 1 palette)))
+         (n-categories (length (car palette)))
+         (n-faces (length reduced-specs))
+         (face-customizer)
+         (full-palette (autothemer--fill-empty-palette-slots palette))
+         (face-specs (make-symbol "face-specs"))
+         (temp-n (make-symbol "n"))
+         (temp-defined-colors (make-symbol "defined-colors"))
+         (temp-color-structs (make-symbol "defined-colors-as-structs"))
+         (temp-color (make-symbol "color"))
+         (temp-colorname (make-symbol "colorname")))
+    (setq face-customizer
+          `(let ((,face-specs)
+                 (,temp-defined-colors))
+             ,@(cl-loop for n from 0 to (1- n-categories)
+                        collect
+                        `(let* ,(autothemer--extract-let-block full-palette n)
+                           ,@(when (and body (eq n 0))
+                               body)
+                           (setq ,temp-defined-colors
+                                 (list ,@(--map (list 'list `',it it) color-names)))
+                           (setq ,temp-color-structs
+                                 (cl-loop for (,temp-colorname ,temp-color) in ,temp-defined-colors
+                                          collect (make-autothemer--color :name ,temp-colorname
+                                                                          :value ,temp-color)))
+                           (setq autothemer--current-theme
+                                 (make-autothemer--theme
+                                  :colors ,temp-color-structs
+                                  :defined-faces ',face-names))
+                           (setq ,face-specs
+                                 (autothemer--append-column
+                                  ,face-specs
+                                  (list ,@(--map `(list
+                                                   (list
+                                                    ',(autothemer--extract-category palette n)
+                                                    ,(autothemer--demote-heads (elt it 1))))
+                                                 reduced-specs))
+                                  ))))
+             (deftheme ,name ,description)
+             (apply #'custom-theme-set-faces ',name
+                    (cl-loop for ,temp-n from 0 to ,(1- n-faces)
+                             collect (list (elt ',face-names ,temp-n)
+                                           (elt ,face-specs ,temp-n))))))
+    face-customizer
+    ))
 (defun autothemer--color-distance (color autothemer-color)
   "Return the distance in rgb space between COLOR and AUTOTHEMER-COLOR.
 Here, COLOR is an Emacs color specification and AUTOTHEMER-COLOR is of
@@ -136,6 +161,32 @@ unbound symbols, such as `normal' or `demibold'."
                                 (t it))
                           spec))))
 
+(defun autothemer--pad-with-nil (row min-number-of-elements)
+  (append row (-repeat (max 0 (- min-number-of-elements (length row))) nil)))
+
+(defun autothemer--replace-nil-by-precursor (palette-row)
+  (let* ((color-name (car palette-row))
+         (color-definitions (cdr palette-row))
+         (last-definition))
+    (cons color-name
+          (cl-loop for definition in color-definitions
+                   do (when definition (setq last-definition definition))
+                   collect last-definition))))
+
+(defun autothemer--fill-empty-palette-slots (palette)
+  ""
+  (let ((n-categories (length (car palette))))
+    (cons (car palette)
+          (cl-loop for row in (cdr palette)
+                   collect (autothemer--replace-nil-by-precursor
+                            (autothemer--pad-with-nil row (1+ n-categories)))))))
+
+(defun autothemer--extract-category (palette n)
+  (elt (car palette) n))
+
+(defun autothemer--extract-let-block (palette n)
+  (cl-loop for row in (cdr palette)
+           collect (list (car row) (elt row (1+ n)))))
 
 ;;;###autoload
 (defun autothemer-generate-templates ()
@@ -159,15 +210,21 @@ palette used in the most recent invocation of
 
 ;; (macroexpand '(autothemer-defautotheme
 ;;                sometheme "somethemename"
-;;                ((red "#880011")
-;;                 (orange "DarkGoldenrod4")
-;;                 (blue "#001199"))
-;;                ((flycheck-error (:underline t :foreground red :weight 'demibold))
-;;                 (button (:box nil :background blue))
+;;                ((((class color) (min-colors 90)) t)
+;;                 (reddish "#880011" "#FF0000")
+;;                 (bluish reddish))
+;;                ((flycheck-error (:underline t :foreground reddish :weight 'demibold))
+;;                 (button (:box nil :background bluish))
 ;;                 ;; etc.
 ;;                 )
 ;;                ;; execute code that uses red, orange, blue
 ;;                ))
+
+(defun autothemer--append-column (list-of-lists new-column)
+  (assert (or (not list-of-lists) (eq (length list-of-lists) (length new-column))))
+  (if list-of-lists (-zip-with #'append list-of-lists new-column)
+    new-column))
+
 
 
 (provide 'autothemer)
