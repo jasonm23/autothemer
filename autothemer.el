@@ -106,10 +106,11 @@ of `autothemer--color' structs."
   (let ((mindistance 0)
         (closest-color nil))
     (mapc (lambda (candidate)
-            (let ((distance (autothemer--color-distance color candidate)))
-              (if (or (not closest-color) (< distance mindistance))
-                  (setq closest-color candidate
-                        mindistance distance))))
+            (when (color-defined-p (autothemer--color-value candidate))
+              (let ((distance (autothemer--color-distance color candidate)))
+                (if (or (not closest-color) (< distance mindistance))
+                    (setq closest-color candidate
+                          mindistance distance)))))
           colors)
     closest-color))
 
