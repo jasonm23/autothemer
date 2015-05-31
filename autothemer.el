@@ -1,7 +1,4 @@
 ;;; autothemer.el --- Conveniently define themes. -*- lexical-binding: t -*-
-;; TODO: Allow the user to define different colors for different terminal types,
-;;       maybe also allow for finer-grained distinctions as made, e.g.,
-;;       by solarized-emacs?
 ;;; Commentary:
 ;;
 ;; TODO: add description
@@ -18,14 +15,15 @@
 Contains the color palette and the list of faces most recently
 customized using `autothemer-defautotheme'.")
 
-(defun autothemer--reduced-spec-to-facespec (category reduced-spec)
-  "Convert REDUCED-SPEC into a face spec for CATEGORY.
-E.g., (autothemer--reduced-spec-to-facespec '(min-colors 60) 
+(defun autothemer--reduced-spec-to-facespec (display reduced-specs)
+  "Create a face spec for DISPLAY, with specs REDUCED-SPECS.
+E.g., (autothemer--reduced-spec-to-facespec '(min-colors 60)
 '(button (:underline t :foreground red)))
--> `(button (((min-colors 60) (:underline ,t :foreground ,red))))."
-  (let* ((face (elt reduced-spec 0))
-         (properties (elt reduced-spec 1))
-         (spec (autothemer--demote-heads `(list (,category ,properties)))))
+-> `(button (((min-colors 60) (:underline ,t :foreground
+,red))))."
+  (let* ((face (elt reduced-specs 0))
+         (properties (elt reduced-specs 1))
+         (spec (autothemer--demote-heads `(list (,display ,properties)))))
     `(list ',face ,spec)))
 
 (defun autothemer--demote-heads (expr)
@@ -40,14 +38,11 @@ E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g))."
 ;;;###autoload
 (defmacro autothemer-defautotheme (name description palette reduced-specs &rest body)
   "Define a theme NAME with description DESCRIPTION.
-A set of color definitions COLORS can be used as let-like
-bindings within both the REDUCED-SPECS and the arbitrary BODY.
-As an example, the following snippet defines a theme named
-useless-theme that customizes the faces button and error
-and prints the color value #550000."
+A color PALETTE can be used to define let*-like
+bindings within both the REDUCED-SPECS and the BODY."
   (let* ((face-names (-map #'car reduced-specs))
          (color-names (-map #'car (-drop 1 palette)))
-         (n-categories (length (car palette)))
+         (n-displays (length (car palette)))
          (n-faces (length reduced-specs))
          (face-customizer)
          (full-palette (autothemer--fill-empty-palette-slots palette))
@@ -60,27 +55,33 @@ and prints the color value #550000."
     (setq face-customizer
           `(let ((,face-specs)
                  (,temp-defined-colors))
-             ,@(cl-loop for n from 0 to (1- n-categories)
+             ,@(cl-loop for n from 0 to (1- n-displays)
                         collect
                         `(let* ,(autothemer--extract-let-block full-palette n)
                            ,@(when (and body (eq n 0))
                                body)
-                           (setq ,temp-defined-colors
-                                 (list ,@(--map (list 'list `',it it) color-names)))
-                           (setq ,temp-color-structs
-                                 (cl-loop for (,temp-colorname ,temp-color) in ,temp-defined-colors
-                                          collect (make-autothemer--color :name ,temp-colorname
-                                                                          :value ,temp-color)))
-                           (setq autothemer--current-theme
-                                 (make-autothemer--theme
-                                  :colors ,temp-color-structs
-                                  :defined-faces ',face-names))
+                           ;; FIXME: instead of emitting this code for all n,
+                           ;; and including a runtime check for n = 0, the when
+                           ;; clause below should only be emitted for n = 0 in
+                           ;; the first place
+                           (when ,(eq n 0)
+                             (setq ,temp-defined-colors
+                                   (list ,@(--map (list 'list `',it it) color-names)))
+                             (setq ,temp-color-structs
+                                   (cl-loop for (,temp-colorname ,temp-color)
+                                            in ,temp-defined-colors
+                                            collect (make-autothemer--color :name ,temp-colorname
+                                                                            :value ,temp-color)))
+                             (setq autothemer--current-theme
+                                   (make-autothemer--theme
+                                    :colors ,temp-color-structs
+                                    :defined-faces ',face-names)))
                            (setq ,face-specs
                                  (autothemer--append-column
                                   ,face-specs
                                   (list ,@(--map `(list
                                                    (list
-                                                    ',(autothemer--extract-category palette n)
+                                                    ',(autothemer--extract-display palette n)
                                                     ,(autothemer--demote-heads (elt it 1))))
                                                  reduced-specs))
                                   ))))
@@ -89,8 +90,8 @@ and prints the color value #550000."
                     (cl-loop for ,temp-n from 0 to ,(1- n-faces)
                              collect (list (elt ',face-names ,temp-n)
                                            (elt ,face-specs ,temp-n))))))
-    face-customizer
-    ))
+    face-customizer))
+
 (defun autothemer--color-distance (color autothemer-color)
   "Return the distance in rgb space between COLOR and AUTOTHEMER-COLOR.
 Here, COLOR is an Emacs color specification and AUTOTHEMER-COLOR is of
@@ -143,7 +144,7 @@ were left uncustomized by the most recent call to
                        (mapcar 'autothemer--cons-to-tree
                                alist))))
 
-(defun autothemer--transform-reduced-spec (reduced-spec theme)
+(defun autothemer--approximate-spec (reduced-spec theme)
   "Replace colors in REDUCED-SPEC by their closest approximations in THEME.
 Replace every expression in REDUCED-SPEC that passes
 `color-defined-p' by the closest approximation found in
@@ -163,9 +164,12 @@ unbound symbols, such as `normal' or `demibold'."
                           spec))))
 
 (defun autothemer--pad-with-nil (row min-number-of-elements)
+  "Make sure that ROW has at least MIN-NUMBER-OF-ELEMENTS, pad with nil if necessary."
   (append row (-repeat (max 0 (- min-number-of-elements (length row))) nil)))
 
 (defun autothemer--replace-nil-by-precursor (palette-row)
+  "Iterate over elements of PALETTE-ROW and replace every occurrence of nil by its most recent non-nil precursor.  The first element of PALETTE-ROW should be non-nil."
+  (assert (car palette-row))
   (let* ((color-name (car palette-row))
          (color-definitions (cdr palette-row))
          (last-definition))
@@ -175,17 +179,19 @@ unbound symbols, such as `normal' or `demibold'."
                    collect last-definition))))
 
 (defun autothemer--fill-empty-palette-slots (palette)
-  ""
-  (let ((n-categories (length (car palette))))
+  "Make sure that every color definition in PALETTE (elements 1 and above) contain exactly (length (car palette)) elements, corresponding to the displays defined in (car palette)."
+  (let ((n-displays (length (car palette))))
     (cons (car palette)
           (cl-loop for row in (cdr palette)
                    collect (autothemer--replace-nil-by-precursor
-                            (autothemer--pad-with-nil row (1+ n-categories)))))))
+                            (autothemer--pad-with-nil row (1+ n-displays)))))))
 
-(defun autothemer--extract-category (palette n)
+(defun autothemer--extract-display (palette n)
+  "Extract from PALETTE display specification #N."
   (elt (car palette) n))
 
 (defun autothemer--extract-let-block (palette n)
+  "Extract a variable definition block from PALETTE containing all color definitions corresponding to display type #N."
   (cl-loop for row in (cdr palette)
            collect (list (car row) (elt row (1+ n)))))
 
@@ -200,7 +206,7 @@ palette used in the most recent invocation of
 `autothemer-defautotheme'."
   (interactive)
   (let* ((missing-faces (autothemer--unthemed-faces))
-         (templates (--map (autothemer--transform-reduced-spec
+         (templates (--map (autothemer--approximate-spec
                             (autothemer--alist-to-reduced-spec
                              it (autothemer--face-to-alist it))
                             autothemer--current-theme)
@@ -222,11 +228,10 @@ palette used in the most recent invocation of
 ;;                ))
 
 (defun autothemer--append-column (list-of-lists new-column)
+  "If LIST-OF-LISTS is nil, return NEW-COLUMN.  Otherwise, append to every element of LIST-OF-LISTS the corresponding element of NEW-COLUMN."
   (assert (or (not list-of-lists) (eq (length list-of-lists) (length new-column))))
   (if list-of-lists (-zip-with #'append list-of-lists new-column)
     new-column))
-
-
 
 (provide 'autothemer)
 ;;; autothemer.el ends here
