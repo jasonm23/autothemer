@@ -1,9 +1,16 @@
 ;;; autothemer.el --- Conveniently define themes. -*- lexical-binding: t -*-
+
+;; Copyright 2015 Sebastian Sturm
+
+;; Author: Sebastian Sturm
+;; URL: https://github.com/sebastiansturm/autothemer
+;; Version: 0.2
+;; Package-Requires: ((dash "2.10.0") (emacs "24"))
+
 ;;; Commentary:
-;;
-;; TODO: add description
+
 ;;; Code:
-(require 'cl)
+(require 'cl-macs)
 (require 'dash)
 
 (cl-defstruct autothemer--color name value)
@@ -214,18 +221,6 @@ palette used in the most recent invocation of
          (buffer (get-buffer-create (generate-new-buffer-name "*Autothemer: unthemed faces*"))))
     (with-current-buffer buffer (emacs-lisp-mode) (insert (pp templates)))
     (switch-to-buffer buffer)))
-
-;; (macroexpand '(autothemer-defautotheme
-;;                sometheme "somethemename"
-;;                ((((class color) (min-colors 90)) t)
-;;                 (reddish "#880011" "#FF0000")
-;;                 (bluish reddish))
-;;                ((flycheck-error (:underline t :foreground reddish :weight 'demibold))
-;;                 (button (:box nil :background bluish))
-;;                 ;; etc.
-;;                 )
-;;                ;; execute code that uses red, orange, blue
-;;                ))
 
 (defun autothemer--append-column (list-of-lists new-column)
   "If LIST-OF-LISTS is nil, return NEW-COLUMN.  Otherwise, append to every element of LIST-OF-LISTS the corresponding element of NEW-COLUMN."
