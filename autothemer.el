@@ -24,7 +24,7 @@
 (defvar autothemer--current-theme nil
   "Internal variable of type `autothemer--theme' used by autothemer.
 Contains the color palette and the list of faces most recently
-customized using `autothemer-defautotheme'.")
+customized using `autothemer-deftheme'.")
 
 (defun autothemer--reduced-spec-to-facespec (display reduced-specs)
   "Create a face spec for DISPLAY, with specs REDUCED-SPECS.
@@ -47,7 +47,7 @@ E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g))."
     expr))
 
 ;;;###autoload
-(defmacro autothemer-defautotheme (name description palette reduced-specs &rest body)
+(defmacro autothemer-deftheme (name description palette reduced-specs &rest body)
   "Define a theme NAME with description DESCRIPTION.
 A color PALETTE can be used to define let*-like
 bindings within both the REDUCED-SPECS and the BODY."
@@ -130,7 +130,7 @@ of `autothemer--color' structs."
   "Find uncustomized faces.
 Iterate through all currently defined faces and return those that
 were left uncustomized by the most recent call to
-`autothemer-defautotheme'."
+`autothemer-deftheme'."
   (let ((all-faces (face-list))
         (themed-faces (autothemer--theme-defined-faces autothemer--current-theme)))
     (--filter (not (-contains? themed-faces it)) all-faces)))
@@ -211,10 +211,10 @@ unbound symbols, such as `normal' or `demibold'."
   "Autogenerate customizations for all unthemed faces.
 Iterate through all currently defined faces, select those that
 have been left uncustomized by the most recent call to
-`autothemer-defautotheme' and generate customizations that best
+`autothemer-deftheme' and generate customizations that best
 approximate the faces' current definitions using the color
 palette used in the most recent invocation of
-`autothemer-defautotheme'."
+`autothemer-deftheme'."
   (interactive)
   (let* ((missing-faces (autothemer--unthemed-faces))
          (templates (--map (autothemer--approximate-spec
