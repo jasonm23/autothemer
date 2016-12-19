@@ -5,7 +5,7 @@
 ;; Author: Sebastian Sturm
 ;; URL: https://github.com/sebastiansturm/autothemer
 ;; Version: 0.2
-;; Package-Requires: ((dash "2.10.0") (emacs "24"))
+;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
 
 ;;; Commentary:
 
@@ -14,7 +14,7 @@
 ;; face customization code using the theme's color palette.
 
 ;;; Code:
-(require 'cl-macs)
+(require 'cl-lib)
 (require 'dash)
 
 (cl-defstruct autothemer--color name value)
@@ -180,7 +180,7 @@ unbound symbols, such as `normal' or `demibold'."
 
 (defun autothemer--replace-nil-by-precursor (palette-row)
   "Iterate over elements of PALETTE-ROW and replace every occurrence of nil by its most recent non-nil precursor.  The first element of PALETTE-ROW should be non-nil."
-  (assert (car palette-row))
+  (cl-assert (car palette-row))
   (let* ((color-name (car palette-row))
          (color-definitions (cdr palette-row))
          (last-definition))
@@ -228,7 +228,7 @@ palette used in the most recent invocation of
 
 (defun autothemer--append-column (list-of-lists new-column)
   "If LIST-OF-LISTS is nil, return NEW-COLUMN.  Otherwise, append to every element of LIST-OF-LISTS the corresponding element of NEW-COLUMN."
-  (assert (or (not list-of-lists) (eq (length list-of-lists) (length new-column))))
+  (cl-assert (or (not list-of-lists) (eq (length list-of-lists) (length new-column))))
   (if list-of-lists (-zip-with #'append list-of-lists new-column)
     new-column))
 
