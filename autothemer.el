@@ -164,7 +164,7 @@ unbound symbols, such as `normal' or `demibold'."
   (let ((colors (autothemer--theme-colors theme))
         (face (car reduced-spec))
         (spec (cdr reduced-spec)))
-    `(,face ,@(--tree-map (cond ((color-defined-p it)
+    `(,face ,@(--tree-map (cond ((and (stringp it) (color-defined-p it))
                                  (autothemer--color-name
                                   (autothemer--find-closest-color colors it)))
                                 ((stringp it) it)
