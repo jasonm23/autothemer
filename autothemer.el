@@ -66,6 +66,7 @@ bindings within both the REDUCED-SPECS and the BODY."
     (setq face-customizer
           `(let ((,face-specs)
                  (,temp-defined-colors))
+             (deftheme ,name ,description)
              ,@(cl-loop for n from 0 to (1- n-displays)
                         collect
                         `(let* ,(autothemer--extract-let-block full-palette n)
@@ -96,7 +97,6 @@ bindings within both the REDUCED-SPECS and the BODY."
                                                     ,(autothemer--demote-heads (elt it 1))))
                                                  reduced-specs))
                                   ))))
-             (deftheme ,name ,description)
              (apply #'custom-theme-set-faces ',name
                     (cl-loop for ,temp-n from 0 to ,(1- n-faces)
                              collect (list (elt ',face-names ,temp-n)
