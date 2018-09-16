@@ -65,6 +65,7 @@ bindings within both the REDUCED-SPECS and the BODY."
          (temp-colorname (make-symbol "colorname")))
     (setq face-customizer
           `(let ((,face-specs)
+                 (,temp-color-structs)
                  (,temp-defined-colors))
              (deftheme ,name ,description)
              ,@(cl-loop for n from 0 to (1- n-displays)
