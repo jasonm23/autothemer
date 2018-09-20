@@ -226,10 +226,10 @@ palette used in the most recent invocation of
     (with-current-buffer buffer (emacs-lisp-mode) (insert (pp templates)))
     (switch-to-buffer buffer)))
 
-(defun autothemer--append-column (list-of-lists new-column)
+(cl-defsubst autothemer--append-column (list-of-lists new-column)
   "If LIST-OF-LISTS is nil, return NEW-COLUMN.  Otherwise, append to every element of LIST-OF-LISTS the corresponding element of NEW-COLUMN."
   (cl-assert (or (not list-of-lists) (eq (length list-of-lists) (length new-column))))
-  (if list-of-lists (-zip-with #'append list-of-lists new-column)
+  (if list-of-lists (inline (-zip-with #'append list-of-lists new-column))
     new-column))
 
 (provide 'autothemer)
