@@ -162,6 +162,22 @@ We recommend thoroughly reviewing the auto generated themes so that
 you produce a high quality theme.  Autothemer doesn't replace good
 judgement and taste!
 
+### Re-using the color palette
+
+While autothemer doesn't export the defined color variables for external
+use, you can define simple advice on `autothemer-deftheme` to do so:
+
+```emacs-lisp
+(define-advice autothemer-deftheme (:before (_ _ palette &rest _) defcolors)
+  (mapcar (lambda (e)
+            (setf (symbol-value (car e))
+                  (cadr e)))
+          (cdr palette)))
+```
+If you place the advice definition before the autothemer-generated theme
+is loaded, e.g. `my-red` from the example above will be available as a 
+variable that can be used in other parts of your emacs configuration.
+
 ### Themes using Autothemer
 
 - [Darktooth](https://github.com/emacsfodder/emacs-theme-darktooth)
