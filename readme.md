@@ -1,4 +1,5 @@
 # Autothemer
+[![NonGNU ELPA](https://elpa.nongnu.org/nongnu/autothemer.svg)](https://elpa.nongnu.org/nongnu/autothemer.html)
 
 Autothemer provides a thin layer on top of `deftheme` and
 `custom-theme-set-faces` that creates a new custom color theme.
