@@ -185,7 +185,7 @@ unbound symbols, such as `normal' or `demibold'."
                                 ((stringp it) it)
                                 ((numberp it) it)
                                 ((facep it) `(quote ,it))
-                                ((consp it) `(quote ,it))
+                                ((consp it) it)
                                 ((not (boundp it)) `(quote ,it))
                                 (t it))
                           spec))))
