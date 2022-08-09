@@ -7,7 +7,7 @@
 ;;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;;; URL: https://github.com/jasonm23/autothemer
-;;; Version: 0.2.4
+;;; Version: 0.2.5
 ;;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
