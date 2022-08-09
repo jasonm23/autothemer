@@ -1,11 +1,14 @@
 ;;; autothemer.el --- Conveniently define themes. -*- lexical-binding: t -*-
-
+;;
+;;; Author: Sebastian Sturm
+;;
 ;; Copyright 2015-2022 Sebastian Sturm
-
-;; Author: Sebastian Sturm
-;; URL: https://github.com/sebastiansturm/autothemer
-;; Version: 0.2.3
-;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
+;;
+;;; Maintainer: Jason Milkins <jasonm23@gmail.com>
+;;
+;;; URL: https://github.com/jasonm23/autothemer
+;;; Version: 0.2.4
+;;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -108,8 +111,7 @@ bindings within both the REDUCED-SPECS and the BODY."
                                                    (list
                                                     ',(autothemer--extract-display palette n)
                                                     ,(autothemer--demote-heads (elt it 1))))
-                                                 reduced-specs))
-                                  ))))
+                                                 reduced-specs))))))
              (apply #'custom-theme-set-faces ',name
                     (cl-loop for ,temp-n from 0 to ,(1- n-faces)
                              collect (list (elt ',face-names ,temp-n)
@@ -183,6 +185,7 @@ unbound symbols, such as `normal' or `demibold'."
                                 ((stringp it) it)
                                 ((numberp it) it)
                                 ((facep it) `(quote ,it))
+                                ((consp it) `(quote ,it))
                                 ((not (boundp it)) `(quote ,it))
                                 (t it))
                           spec))))
@@ -215,7 +218,7 @@ unbound symbols, such as `normal' or `demibold'."
   (elt (car palette) n))
 
 (defun autothemer--extract-let-block (palette n)
-  "Extract a variable definition block from PALETTE containing all color definitions corresponding to display type #N."
+  "Extract a variable definition block from PALETTE for display type N."
   (cl-loop for row in (cdr palette)
            collect (list (car row) (elt row (1+ n)))))
 
@@ -229,13 +232,17 @@ approximate the faces' current definitions using the color
 palette used in the most recent invocation of
 `autothemer-deftheme'."
   (interactive)
-  (let* ((missing-faces (autothemer--unthemed-faces))
-         (templates (--map (autothemer--approximate-spec
-                            (autothemer--alist-to-reduced-spec
-                             it (autothemer--face-to-alist it))
-                            autothemer--current-theme)
-                           missing-faces))
-         (buffer (get-buffer-create (generate-new-buffer-name "*Autothemer: unthemed faces*"))))
+  (let* ((missing-faces
+          (autothemer--unthemed-faces))
+         (templates
+           (--map (autothemer--approximate-spec
+                   (autothemer--alist-to-reduced-spec
+                    it (autothemer--face-to-alist it))
+                   autothemer--current-theme)
+                  missing-faces))
+         (buffer
+          (get-buffer-create
+           (generate-new-buffer-name "*Autothemer: unthemed faces*"))))
     (with-current-buffer buffer (emacs-lisp-mode) (insert (pp templates)))
     (switch-to-buffer buffer)))
 
