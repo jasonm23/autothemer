@@ -7,7 +7,7 @@
 ;;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;;; URL: https://github.com/jasonm23/autothemer
-;;; Version: 0.2.5
+;;; Version: 0.2.6
 ;;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -57,9 +57,10 @@ E.g., (autothemer--reduced-spec-to-facespec '(min-colors 60)
   "Demote every list head within EXPR by one element.
 E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g))."
   (if (listp expr)
-      `(list ,@(mapcar (lambda (it) (if (and (listp it) (not (eq (car it) 'quote)))
-                                        (autothemer--demote-heads it) it))
-                       expr))
+      `(list ,@(mapcar
+                (lambda (it) (if (and (listp it) (not (eq (car it) 'quote)))
+                                 (autothemer--demote-heads it) it))
+                expr))
     expr))
 
 ;;;###autoload
@@ -191,11 +192,32 @@ unbound symbols, such as `normal' or `demibold'."
                           spec))))
 
 (defun autothemer--pad-with-nil (row min-number-of-elements)
-  "Make sure that ROW has at least MIN-NUMBER-OF-ELEMENTS, pad with nil if necessary."
-  (append row (-repeat (max 0 (- min-number-of-elements (length row))) nil)))
+  "Make sure that ROW has at least MIN-NUMBER-OF-ELEMENTS.
+Pad with nil if necessary."
+  (append
+   row
+   (-repeat
+    (max 0
+         (- min-number-of-elements
+            (length row)))
+    nil)))
 
-(defun autothemer--replace-nil-by-precursor (palette-row)
-  "Iterate over elements of PALETTE-ROW and replace every occurrence of nil by its most recent non-nil precursor.  The first element of PALETTE-ROW should be non-nil."
+(defun autothemer--replace-nil-by-precursor(palette-row)
+  "Replace nil colors in PALETTE-ROW with their precursor.
+
+PALETTE-ROW is of the form `(name color [color ...])'
+
+Where  the first `color' must be non nil.
+
+Any subsequent nil color will be replaced by the previous value.
+
+For example:
+
+     (\"red-foo\" \"#FF0000\" nil)
+
+Will become:
+
+     (\"red-foo\" \"#FF0000\" \"#FF0000\")"
   (cl-assert (car palette-row))
   (let* ((color-name (car palette-row))
          (color-definitions (cdr palette-row))
@@ -206,7 +228,7 @@ unbound symbols, such as `normal' or `demibold'."
                    collect last-definition))))
 
 (defun autothemer--fill-empty-palette-slots (palette)
-  "Make sure that every color definition in PALETTE (elements 1 and above) contain exactly (length (car palette)) elements, corresponding to the displays defined in (car palette)."
+  "Fill empty PALETTE slots so each display has all color-definitions."
   (let ((n-displays (length (car palette))))
     (cons (car palette)
           (cl-loop for row in (cdr palette)
@@ -223,17 +245,32 @@ unbound symbols, such as `normal' or `demibold'."
            collect (list (car row) (elt row (1+ n)))))
 
 ;;;###autoload
-(defun autothemer-generate-templates ()
-  "Autogenerate customizations for all unthemed faces.
-Iterate through all currently defined faces, select those that
-have been left uncustomized by the most recent call to
-`autothemer-deftheme' and generate customizations that best
-approximate the faces' current definitions using the color
-palette used in the most recent invocation of
-`autothemer-deftheme'."
+(defun autothemer-generate-templates-filtered (regexp)
+  "Autogenerate customizations for unthemed faces matching REGEXP.
+
+Calls `autothemer-generate-templates' after user provides REGEXP interactively."
+  (interactive "sGenerate face templates matching regexp: ")
+  (autothemer-generate-templates regexp))
+
+;;;###autoload
+(defun autothemer-generate-templates (&optional regexp)
+  "Autogenerate customizations for unthemed faces (optionally by REGEXP).
+
+Generate customizations that approximate current face definitions using the
+nearest colors in the color palette of `autothemer--current-theme'.
+
+An error is shown when no current theme is available."
   (interactive)
+  (unless autothemer--current-theme
+    (user-error "No autothemer--current-theme available. Please evaluate an autothemer-deftheme"))
   (let* ((missing-faces
-          (autothemer--unthemed-faces))
+          (if (null regexp)
+              (autothemer--unthemed-faces)
+            (--filter
+              (string-match-p
+               regexp
+               (symbol-name it))
+             (autothemer--unthemed-faces))))
          (templates
            (--map (autothemer--approximate-spec
                    (autothemer--alist-to-reduced-spec
