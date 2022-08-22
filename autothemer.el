@@ -1,4 +1,4 @@
-;;; autothemer.el --- Conveniently define themes. -*- lexical-binding: t -*-
+;;; autothemer.el --- Conveniently define themes -*- lexical-binding: t -*-
 ;;
 ;;; Author: Sebastian Sturm
 ;;
@@ -35,7 +35,7 @@
 
 (cl-defstruct autothemer--color name value)
 
-(cl-defstruct autothemer--theme colors defined-faces)
+(cl-defstruct autothemer--theme colors defined-faces name description)
 
 (defvar autothemer--current-theme nil
   "Internal variable of type `autothemer--theme' used by autothemer.
@@ -103,6 +103,8 @@ bindings within both the REDUCED-SPECS and the BODY."
                                                                                 :value ,temp-color)))
                                  (setq autothemer--current-theme
                                        (make-autothemer--theme
+                                        :name ,(symbol-name name)
+                                        :description ,description
                                         :colors ,temp-color-structs
                                         :defined-faces ',face-names))))
                            (setq ,face-specs
