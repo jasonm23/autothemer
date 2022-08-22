@@ -1,14 +1,16 @@
-;;; autothemer.el --- Conveniently define themes. -*- lexical-binding: t -*-
+;;; autothemer.el --- Conveniently define themes -*- lexical-binding: t -*-
 ;;
-;;; Author: Sebastian Sturm
+;; Author: Sebastian Sturm
 ;;
 ;; Copyright 2015-2022 Sebastian Sturm
 ;;
-;;; Maintainer: Jason Milkins <jasonm23@gmail.com>
+;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
-;;; URL: https://github.com/jasonm23/autothemer
-;;; Version: 0.2.6
-;;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
+;; URL: https://github.com/jasonm23/autothemer
+;; Version: 0.2.6
+;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
+
+;;; License:
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
