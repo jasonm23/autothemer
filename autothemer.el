@@ -321,9 +321,9 @@ See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-val
   (autothemer--current-theme-guard)
   (let*
       ((selected
-        (completing-read (if (boundp 'prompt)
-                             prompt
-                           "Select a color: ")
+        (completing-read (if (null prompt)
+                             "Select a color: "
+                           prompt)
          (mapcar #'(lambda (it)
                      (let ((color (autothemer--color-value it))
                            (name (autothemer--color-name it)))
