@@ -7,11 +7,10 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.6
-;; Package-Requires: ((dash "2.10.0") (emacs "24") (cl-lib "0.5"))
-
+;; Version: 0.2.7
+;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
+;;
 ;;; License:
-
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
@@ -135,14 +134,14 @@ type `autothemer--color'."
   "Return the element of COLORS that is closest in rgb space to COLOR.
 Here, COLOR is an Emacs color specification and COLORS is a list
 of `autothemer--color' structs."
-  (let ((mindistance 0)
+  (let ((min-distance 0)
         (closest-color nil))
     (mapc (lambda (candidate)
             (when (color-defined-p (autothemer--color-value candidate))
               (let ((distance (autothemer--color-distance color candidate)))
-                (if (or (not closest-color) (< distance mindistance))
+                (if (or (not closest-color) (< distance min-distance))
                     (setq closest-color candidate
-                          mindistance distance)))))
+                          min-distance distance)))))
           colors)
     closest-color))
 
@@ -287,11 +286,60 @@ An error is shown when no current theme is available."
     (with-current-buffer buffer (emacs-lisp-mode) (insert (pp templates)))
     (switch-to-buffer buffer)))
 
-(cl-defsubst autothemer--append-column (list-of-lists new-column)
-  "If LIST-OF-LISTS is nil, return NEW-COLUMN.  Otherwise, append to every element of LIST-OF-LISTS the corresponding element of NEW-COLUMN."
-  (cl-assert (or (not list-of-lists) (eq (length list-of-lists) (length new-column))))
-  (if list-of-lists (inline (-zip-with #'append list-of-lists new-column))
+(cl-defsubst autothemer--append-column (lists new-column)
+  "If LISTS is nil, return NEW-COLUMN.
+Otherwise, append NEW-COLUMN to every element of LISTS."
+  (cl-assert (or (not lists) (eq (length lists) (length new-column))))
+  (if lists (inline (-zip-with #'append lists new-column))
     new-column))
+
+(defun autothemer--current-theme-guard ()
+  "Guard functions from executing when there's no current theme."
+  (when (null autothemer--current-theme)
+    (user-error "No current theme available. Evaluate an autotheme definition")))
+
+(defun autothemer--get-color (color-name)
+  "Return color palette object for (string) COLOR-NAME.
+
+Search the `autothemer--current-theme' color palette for COLOR-NAME
+and returns a color in the form of `autothemer--color' struct.
+
+See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-value'."
+  (autothemer--current-theme-guard)
+  (--find
+   (eql (intern color-name)
+        (autothemer--color-name it))
+   (autothemer--theme-colors autothemer--current-theme)))
+
+(defun autothemer--select-color (&optional prompt)
+  "Select a color from the current palette, optionally use PROMPT.
+Current palette is read from `autothemer--current-theme'.
+
+The selected color will be in the form of a `autothemer--color'
+
+See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-value'."
+  (autothemer--current-theme-guard)
+  (let*
+      ((selected
+        (completing-read (if (boundp 'prompt)
+                             prompt
+                           "Select a color: ")
+         (mapcar #'(lambda (it)
+                     (let ((color (autothemer--color-value it))
+                           (name (autothemer--color-name it)))
+                      (format
+                       "%s %s  %-45s"
+                       (propertize "                                        "
+                        'face (list ':background color
+                                    ':foreground (readable-foreground-color color)))
+                       (propertize color
+                        'face (list ':background color
+                                    ':foreground (readable-foreground-color color)))
+                       name)))
+          (autothemer--theme-colors autothemer--current-theme))))
+       (color-name (car (split-string selected " " t " "))))
+    (autothemer--get-color color-name)))
+
 
 (provide 'autothemer)
 ;;; autothemer.el ends here
