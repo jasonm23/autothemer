@@ -181,7 +181,9 @@ variable that can be used in other parts of your emacs configuration.
 
 ### Select colors from the palette
 
-Since version 0.2.8 it is possible to select a color from the palette (using the `completing-read` style.) Use `autothemer-select-color`, it returns an `autothemer--color` struct. (containing `name` and `value` (hex `#RRGGBB`)). 
+Since version 0.2.8 it is possible to select a color from the palette (using the `completing-read` style.) 
+
+`autothemer-select-color` returns an `autothemer--color` struct (`name`,`value`)
 
 ![](https://raw.githubusercontent.com/jasonm23/autothemer/master/autothemer-select-color.png)
 
