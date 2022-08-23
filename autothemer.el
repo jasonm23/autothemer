@@ -364,11 +364,9 @@ If PLIST is nil, ARGS are bound to BODY nil values."
 ;;; SVG Palette generator...
 
 (defun autothemer-generate-palette-svg (&optional options)
-  "Create a palette svg image for an autothemer theme.
+  "Create an SVG palette image for a theme.
 
-OPTIONS will be collected interactively if not provided.
-
-OPTIONS is a plist of the form (all keys are optional):
+Optionally supply OPTIONS, a plist (all keys are optional):
 
     :theme-file - theme filename
     :theme-name - override the title found in :theme-file
@@ -382,21 +380,26 @@ OPTIONS is a plist of the form (all keys are optional):
     :font-family - font name to use in the generated SVG
     :bg-color - background color
     :text-color - text color
+    :text-accent-color - text color
     :svg-out-file - SVG output filename
 
 For advanced customization the :page-template and :swatch-template can be
-used to provide SVG templates for the palette.  Templates are filled by `(format)'.
+used to provide customize the SVG templates.
+
+Note: Template parameters are filled by `format' so we mark them as follows:
 
 Page Template parameters:
 
-    %1$s - width
-    %2$s - height
-    %3$s - font-family
-    %4$s - text-color
-    %5$s - bg-color
-    %6$s - theme-name
-    %7$s - theme-description
-    %8$s - theme-url
+    %1$s  - width
+    %2$s  - height
+    %3$s  - font-family
+    %4$s  - text-color
+    %5$s  - text-accent-color
+    %6$s  - bg-color
+    %7$s  - theme-name
+    %8$s  - theme-description
+    %9$s  - theme-url
+    %10$s - color swatches
 
 Swatch Template parameters:
 
@@ -404,14 +407,13 @@ Swatch Template parameters:
     %2$s - y
     %3$s - swatch-color
     %4$s - text-color
-    %5$s - swatch-color-name
-"
+    %5$s - swatch-color-name"
   (interactive)
   (autothemer--plist-bind
     (theme-file theme-name theme-description theme-url
      swatch-width swatch-height columns page-template
-     swatch-template font-family bg-color text-color
-     svg-out-file)
+     swatch-template font-family bg-color
+     text-color text-accent-color svg-out-file)
     options
    (let ((theme-file (or theme-file (read-file-name "Select autothemer theme .el file: "))))
      (load-file theme-file) ;; make it the current-theme
@@ -430,14 +432,16 @@ Swatch Template parameters:
                          |    fill: %4$s;
                          |    }
                          |  </style>
-                         |  <rect x=\"0\" y=\"0\" rx=\"10\" width=\"%1$spx\" height=\"%2$spx\" id=\"background-panel\" fill=\"%5$s\"/>
+                         |  <rect x=\"0\" y=\"0\" rx=\"10\" width=\"%1$spx\" height=\"%2$spx\" id=\"background-panel\" fill=\"%6$s\"/>
                          |  <g transform=\"translate(14,10)\">
-                         |    <text style=\"font-size:42pt;\" font-weight=\"bold\" x=\"10\" y=\"50\" id=\"theme-name\">%6$s</text>
-                         |    <text style=\"font-size:12pt;\" x=\"10\" y=\"75\" id=\"theme-description\">%7$s</text>
-                         |    <text style=\"font-size:8pt;fill:#666\" x=\"380\" y=\"20\" id=\"theme-url\">%8$s</text>
+                         |    <a xlink:href=\"%9$s\">
+                         |    <text style=\"font-size:42pt;\" font-weight=\"bold\" x=\"3%%\" y=\"50\" id=\"theme-name\">%7$s</text>
+                         |    <text style=\"font-size:12pt;\" x=\"4%%\" y=\"75\" id=\"theme-description\">%8$s</text>
+                         |    <text style=\"font-size:8pt;fill: %5$s\" text-anchor=\"end\" x=\"95%%\" y=\"20\" id=\"theme-url\">%9$s</text>
+                         |    </a>
                          |  </g>
                          |  <g transform=\"translate(70,-40)\">
-                         |  %9$s
+                         |  %10$s
                          |  </g>
                          |</svg>
                          |")))
@@ -447,8 +451,8 @@ Swatch Template parameters:
               (autothemer--unindent "<g transform=\"translate(%1$s,%2$s),rotate(45)\">
                          | <ellipse cx=\"70\" cy=\"70\" rx=\"45\" ry=\"45\" id=\"background-color\" fill=\"%3$s\"/>
                          | <ellipse cx=\"70\" cy=\"70\" rx=\"42\" ry=\"42\" id=\"color\" fill=\"%4$s\"/>
-                         | <text style=\"font-size:7pt\" font-weight=\"bold\" x=\"52\" y=\"125\" id=\"color-name\">%5$s</text>
-                         | <text style=\"font-size:7pt; fill:#666;\" font-weight=\"bold\" x=\"52\" y=\"134\" id=\"color\">%4$s</text>
+                         | <text style=\"font-size:7pt\" font-weight=\"bold\" x=\"52\" y=\"125\" id=\"color-name\">%6$s</text>
+                         | <text style=\"font-size:7pt; fill:%5$s;\" font-weight=\"bold\" x=\"52\" y=\"134\" id=\"color\">%4$s</text>
                          |</g>
                          |")))
 
@@ -469,7 +473,8 @@ Swatch Template parameters:
                                150))
             (columns (or columns
                          6))
-            (width (+ 80 (* columns swatch-width)))
+            ;; TODO: Width and Height padding (55, 120) parameterized?
+            (width (+ 55 (* columns swatch-width)))
             (height (+ 120 (* (/ (length colors) columns) swatch-height)))
             (background-color (or bg-color
                                   (autothemer--color-value
@@ -477,6 +482,10 @@ Swatch Template parameters:
             (text-color (or text-color
                             (autothemer--color-value
                              (autothemer--select-color "Select Text color: "))))
+            (text-accent-color (or text-accent-color
+                                   (autothemer--color-value
+                                    (autothemer--select-color "Select Text accent color: "))))
+            (svg-out-file (or svg-out-file (read-file-name (format "Enter a Filename to save SVG palette for %s." theme-name))))
             (svg-swatches (string-join
                             (-map-indexed
                                (lambda (index it)
@@ -492,21 +501,24 @@ Swatch Template parameters:
                                              y
                                              background-color
                                              color
+                                             text-accent-color
                                              name)))
                              colors)
                             "\n")))
-       (with-temp-file (or svg-out-file (read-file-name "Enter a filename to save .svg"))
+       (with-temp-file svg-out-file
          (insert
           (format page-template
                   width
                   height
                   font-family
                   text-color
+                  text-accent-color
                   background-color
                   theme-name
                   theme-description
                   theme-url
-                  svg-swatches)))))))
+                  svg-swatches)))
+      (message "%s generated." svg-out-file)))))
 
 (provide 'autothemer)
 ;;; autothemer.el ends here
