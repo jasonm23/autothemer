@@ -211,7 +211,22 @@ theme before use.
 
 Since version 0.2.8 you can generate a SVG image of a theme palette. (see this example for the [Sakura theme](https://raw.githubusercontent.com/emacsfodder/emacs-theme-sakura/master/sakura.svg))
 
-Using `autothemer-generate-palette-svg` interactively, emacs will ask for the relevant parameters required.  You can use an `options` ~~hash~~ `plist` to provide some or all of the required options.
+Using `autothemer-generate-palette-svg` interactively, emacs will ask for the relevant parameters required.  You can use `options` (a `plist`) to provide some or all of the required options. 
+
+For example:
+
+```
+(autothemer-generate-palette-svg 
+'(:theme-file "orangey-bits-theme.el"
+  :svg-out-file "test.svg"
+  :bg-color "#190700"
+  :text-color "#FFE0C0"
+  :text-accent-color "#90776C"
+  :swatch-height 160
+  :swatch-width 120
+  :theme-name "Orangey Bits"
+  :font-family "Helvetica Neue"))
+```
 
 #### autothemer-generate-palette-svg options
 
