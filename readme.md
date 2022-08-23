@@ -215,7 +215,7 @@ Using `autothemer-generate-palette-svg` interactively, emacs will ask for the re
 
 For example:
 
-```
+```lisp
 (autothemer-generate-palette-svg 
 '(:theme-file "orangey-bits-theme.el"
   :svg-out-file "test.svg"
