@@ -209,7 +209,7 @@ theme before use.
 
 ### Generate a SVG image of the palette
 
-Since version 0.2.8 you can generate a SVG image of a theme palette.
+Since version 0.2.8 you can generate a SVG image of a theme palette. (see this example for the [Sakura theme](https://raw.githubusercontent.com/emacsfodder/emacs-theme-sakura/master/sakura.svg)
 
 Using `autothemer-generate-palette-svg` interactively, emacs will ask for the relevant parameters required.  You can use an `options` ~~hash~~ `plist` to provide some or all of the required options.
 
