@@ -179,6 +179,131 @@ If you place the advice definition before the autothemer-generated theme
 is loaded, e.g. `my-red` from the example above will be available as a 
 variable that can be used in other parts of your emacs configuration.
 
+### Select colors from the palette
+
+Since version 0.2.8 it is possible to select a color from the palette (using the `completing-read` style.) Use `autothemer-select-color`, it returns an `autothemer--color` struct. (containing `name` and `value` (hex `#RRGGBB`)). 
+
+![](https://raw.githubusercontent.com/jasonm23/autothemer/master/autothemer-select-color.png)
+
+You'd need to do something like this to insert a color name or color value: 
+
+```lisp
+(require 'autothemer)
+
+(defun insert-autothemer-color-value () 
+  "Select and insert a color value from `autothemer--current-theme`.")
+  (interactive)
+  (autothemer--color-value (autothemer-select-color))
+  
+(defun insert-autothemer-color-name)
+  "Select and insert a color name from `autothemer--current-theme`.")
+  (interactive)
+  (autothemer--color-name (autothemer-select-color))
+```
+
+If `autothemer--current-theme` is `nil`, you'll need to eval an autothemer based
+theme before use.
+
+
+### Generate a SVG image of the palette
+
+Since version 0.2.8 you can generate a SVG image of a theme palette.
+
+Using `autothemer-generate-palette-svg` interactively, emacs will ask for the relevant parameters required.  You can use an `options` ~~hash~~ `plist` to provide some or all of the required options.
+
+#### autothemer-generate-palette-svg options
+
+| Option               | Description                                           |
+|----------------------|-------------------------------------------------------|
+| `:theme-file`        | Theme filename                                        |
+| `:theme-name`        | Override the title found in `:theme-file`             |
+| `:theme-description` | Override the description found in `:theme-file`       |
+| `:theme-url`         | Override the url found in `:theme-file`               |
+| `:swatch-width`      | px width of a color swatch (default: `100`)           |
+| `:swatch-height`     | px height of a color swatch (default: `150`)          |
+| `:columns`           | Number of columns for each palette row (default: `6`) |
+| `:page-template`     | See page-template below                               |
+| `:swatch-template`   | see swatch-template below                             |
+| `:font-family`       | Font name to use in the generated SVG                 |
+| `:bg-color`          | Background color                                      |
+| `:text-color`        | Text color                                            |
+| `:text-accent-color` | Text accent color                                     |
+| `:svg-out-file`      | SVG output filename                                   |
+
+##### :page-template and :swatch-template
+
+
+For advanced customization the options `:page-template` and `:swatch-template`,
+can supplied as customized SVG templates.
+
+Note: Template parameters are `format` style, we mark them as follows:
+
+###### Page Template parameters
+
+| Param   | name                |
+|---------|---------------------|
+| `%1$s`  | `width`             |
+| `%2$s`  | `height`            |
+| `%3$s`  | `font-family`       |
+| `%4$s`  | `text-color`        |
+| `%5$s`  | `text-accent-color` |
+| `%6$s`  | `bg-color`          |
+| `%7$s`  | `theme-name`        |
+| `%8$s`  | `theme-description` |
+| `%9$s`  | `theme-url`         |
+| `%10$s` | `swatches`          |
+
+The builtin page template
+
+```svg
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="%1$spx" height="%2$spx"
+     version="1.1"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+  <style>
+    text {
+    font-family: "%3$s";
+    fill: %4$s;
+    }
+  </style>
+  <rect x="0" y="0" rx="10" width="%1$spx" height="%2$spx" id="background-panel" fill="%6$s"/>
+  <g transform="translate(14,10)">
+    <a xlink:href="%9$s">
+    <text style="font-size:42pt;" font-weight="bold" x="3%%" y="50" id="theme-name">%7$s</text>
+    <text style="font-size:12pt;" x="4%%" y="75" id="theme-description">%8$s</text>
+    <text style="font-size:8pt;fill: %5$s" text-anchor="end" x="95%%" y="20" id="theme-url">%9$s</text>
+    </a>
+  </g>
+  <g transform="translate(70,-40)">
+  %10$s
+  </g>
+</svg>
+```
+
+###### Swatch Template parameters
+
+| Param  | Description         |
+|--------|---------------------|
+| `%1$s` | `x`                 |
+| `%2$s` | `y`                 |
+| `%3$s` | `swatch-color`      |
+| `%4$s` | `text-color`        |
+| `%5$s` | `swatch-color-name` |
+
+The builtin swatch template:
+
+``` svg
+<g transform="translate(%1$s,%2$s),rotate(45)">
+ <ellipse cx="70" cy="70" rx="45" ry="45" id="background-color" fill="%3$s"/>
+ <ellipse cx="70" cy="70" rx="42" ry="42" id="color" fill="%4$s"/>
+ <text style="font-size:7pt" font-weight="bold" x="52" y="125" id="color-name">%6$s</text>
+ <text style="font-size:7pt; fill:%5$s;" font-weight="bold" x="52" y="134" id="color">%4$s</text>
+</g>
+```
+
 # TVA
 
 Theme Variance Architecture is the pattern used in the Gruvbox theme for creating theme variants.
