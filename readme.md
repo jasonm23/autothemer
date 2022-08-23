@@ -193,12 +193,12 @@ You'd need to do something like this to insert a color name or color value:
 (defun insert-autothemer-color-value () 
   "Select and insert a color value from `autothemer--current-theme`.")
   (interactive)
-  (autothemer--color-value (autothemer-select-color))
+  (insert (autothemer--color-value (autothemer-select-color)))
   
 (defun insert-autothemer-color-name)
   "Select and insert a color name from `autothemer--current-theme`.")
   (interactive)
-  (autothemer--color-name (autothemer-select-color))
+  (insert (autothemer--color-name (autothemer-select-color)))
 ```
 
 If `autothemer--current-theme` is `nil`, you'll need to eval an autothemer based
