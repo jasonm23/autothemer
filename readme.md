@@ -185,7 +185,7 @@ Since version 0.2.8 it is possible to select a color from the palette (using the
 
 `autothemer-select-color` returns an `autothemer--color` struct (`name`,`value`)
 
-![](https://raw.githubusercontent.com/jasonm23/autothemer/master/autothemer-select-color.png)
+![](https://raw.githubusercontent.com/jasonm23/autothemer/master/autothemer-select-color-01.png)
 
 You'd need to do something like this to insert a color name or color value: 
 
