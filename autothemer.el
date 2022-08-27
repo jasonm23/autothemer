@@ -308,7 +308,9 @@ Otherwise, append NEW-COLUMN to every element of LISTS."
 Search the `autothemer--current-theme' color palette for COLOR-NAME
 and returns a color in the form of `autothemer--color' struct.
 
-See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-value'."
+See also `autothemer--color-p',
+         `autothemer--color-name',
+         `autothemer--color-value'."
   (autothemer--current-theme-guard)
   (--find
    (eql (intern color-name)
@@ -321,7 +323,9 @@ Current palette is read from `autothemer--current-theme'.
 
 The selected color will be in the form of a `autothemer--color'
 
-See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-value'."
+See also `autothemer--color-p',
+         `autothemer--color-name',
+         `autothemer--color-value'."
   (autothemer--current-theme-guard)
   (let*
       ((selected
@@ -345,7 +349,7 @@ See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-val
     (autothemer--get-color color-name)))
 
 (defun autothemer-insert-color ()
-  "Interactively select and insert a color from the current autotheme palette."
+  "Select and insert a color from the current autotheme palette."
   (interactive)
   (autothemer--current-theme-guard)
   (let ((color (autothemer--color-value
@@ -353,7 +357,7 @@ See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-val
     (insert color)))
 
 (defun autothemer-insert-color-name ()
-  "Interactively select and insert a color name from the current autotheme palette."
+  "Select and insert a color name from the current autotheme palette."
   (interactive)
   (autothemer--current-theme-guard)
   (let ((color-name (autothemer--color-name
@@ -385,10 +389,34 @@ If PLIST is nil, ARGS are bound to BODY nil values."
 
 Load/eval the required autothemer theme source (not
 byte-compiled) to set `autothemer--current-theme'."
-
+  (autothemer--current-theme-guard)
   `(let ,(--map (list (autothemer--color-name it) (autothemer--color-value it))
                 (autothemer--theme-colors autothemer--current-theme))
      ,@body))
+
+;;; Colorize alist for rainbow-mode
+(defun autothemer-colorize-alist ()
+  "Generate an alist for use with rainbow-mode.
+
+To colorize use:
+
+    (rainbow-colorize-by-assoc (autothemer-colorize-alist))
+
+Colors are from `autothemer--current-theme'."
+  (autothemer--current-theme-guard)
+  (--map (cons (format "%s" (autothemer--color-name it))
+               (autothemer--color-value it))
+    (autothemer--theme-colors autothemer--current-theme)))
+
+(defvar autothemer--colors-font-lock-keywords nil)
+
+(defun autothemer-colorize ()
+  "Colorize using rainbow-mode."
+  (interactive)
+  (setq autothemer--colors-font-lock-keywords
+      `((,(regexp-opt (mapcar 'car (autothemer-colorize-alist)) 'words)
+         (0 (rainbow-colorize-by-assoc (autothemer-colorize-alist))))))
+  (font-lock-add-keywords nil autothemer--colors-font-lock-keywords t))
 
 ;;; SVG Palette generator...
 
@@ -439,10 +467,24 @@ Swatch Template parameters:
     %5$s - swatch-color-name"
   (interactive)
   (autothemer--plist-bind
-    (theme-file theme-name theme-description theme-url
-     swatch-width swatch-height columns page-template
-     swatch-template font-family bg-color
-     text-color text-accent-color svg-out-file)
+    (theme-file
+     theme-name
+     theme-description
+     theme-url
+
+     swatch-width
+     swatch-height
+     columns
+
+     page-template
+     swatch-template
+
+     font-family
+     bg-color
+     text-color
+     text-accent-color
+
+     svg-out-file)
     options
    (let ((theme-file (or theme-file (read-file-name "Select autothemer theme .el file: "))))
      (load-file theme-file) ;; make it the current-theme
