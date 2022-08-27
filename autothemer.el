@@ -379,6 +379,17 @@ If PLIST is nil, ARGS are bound to BODY nil values."
   "Unindent string S marked with | chars."
   (replace-regexp-in-string "^ *|" "" s))
 
+;;; let palette...
+(defmacro autothemer-let-palette (&rest body)
+  "Provide a let block for BODY from `autothemer--current-theme'.
+
+Load/eval the required autothemer theme source (not
+byte-compiled) to set `autothemer--current-theme'."
+
+  `(let ,(--map (list (autothemer--color-name it) (autothemer--color-value it))
+                (autothemer--theme-colors autothemer--current-theme))
+     ,@body))
+
 ;;; SVG Palette generator...
 
 (defun autothemer-generate-palette-svg (&optional options)
