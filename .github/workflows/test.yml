@@ -33,4 +33,5 @@ jobs:
 
     - name: Test
       run: |
+        bin/setup
         bin/test
