@@ -91,7 +91,24 @@
     "Check autothemer-let-palette"
     (should (string=
              "#781210"
-             (autothemer-let-palette example-red)))))
+             (autothemer-let-palette example-red))))
+
+  (ert-deftest autothemer-plist-bind ()
+    "Test plist-bind"
+    (autothemer--plist-bind (a b) '(:a 1 :b 2)
+     (should (eql a 1))
+     (should (eql b 2))))
+
+  (ert-deftest autothemer-colorize-alist ()
+    "Check autothemer-colorize-alist."
+    (should (equal '(("example-red" . "#781210")
+                     ("example-green" . "#22881F")
+                     ("example-blue" . "#212288")
+                     ("example-purple" . "#812FFF")
+                     ("example-yellow" . "#EFFE00")
+                     ("example-orange" . "#E06500")
+                     ("example-cyan" . "#22DDFF"))
+                   (autothemer-colorize-alist)))))
 
 ;;; Example theme in memory:
 '(#s(autothemer--theme

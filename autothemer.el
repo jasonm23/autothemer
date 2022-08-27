@@ -433,12 +433,19 @@ Optionally supply OPTIONS, a plist (all keys are optional):
     :swatch-height - px spacing height of a color swatch (default: 150)
     :columns - number of columns for each palette row (default: 6)
     :page-template - see page-template below
+    :page-top-margin - (default ...)
+    :page-right-margin - (default ...)
+    :page-bottom-margin - (default ...)
+    :page-left-margin - (default ...)
+    :h-space - (default ...)
+    :v-space - (default ...)
     :swatch-template - see swatch-template below
     :font-family - font name to use in the generated SVG
-    :bg-color - background color
-    :text-color - text color
-    :text-accent-color - text color
-    :svg-out-file - SVG output filename
+    :bg-color
+    :text-color
+    :text-accent-color
+    :swatch-border-color
+    :svg-out-file
 
 For advanced customization the :page-template and :swatch-template can be
 used to provide customize the SVG templates.
@@ -462,9 +469,10 @@ Swatch Template parameters:
 
     %1$s - x
     %2$s - y
-    %3$s - swatch-color
-    %4$s - text-color
-    %5$s - swatch-color-name"
+    %3$s - swatch-border-color
+    %4$s - swatch-color
+    %5$s - text-accent-color
+    %6$s - swatch-color-name"
   (interactive)
   (autothemer--plist-bind
     (theme-file
@@ -476,14 +484,22 @@ Swatch Template parameters:
      swatch-height
      columns
 
+     page-top-margin
+     page-right-margin
+     page-bottom-margin
+     page-left-margin
+
      page-template
      swatch-template
 
      font-family
+
      bg-color
      text-color
      text-accent-color
-
+     swatch-border-color
+     h-space
+     v-space
      svg-out-file)
     options
    (let ((theme-file (or theme-file (read-file-name "Select autothemer theme .el file: "))))
@@ -528,34 +544,35 @@ Swatch Template parameters:
                          |")))
 
             (autotheme-name (autothemer--theme-name autothemer--current-theme))
-            (theme-name (or theme-name
-                            (autothemer--theme-name autothemer--current-theme)))
-            (theme-description (or theme-description
-                                   (autothemer--theme-description autothemer--current-theme)))
-            (theme-url  (or theme-url
-                         (lm-homepage theme-file)
-                         (read-string "Enter theme URL: " "https://github.com/")))
             (colors (autothemer--theme-colors autothemer--current-theme))
-            (font-family  (or font-family
-                           (read-string "Font family name: " "Helvetica Neue")))
-            (swatch-width (or swatch-width
-                              100))
-            (swatch-height (or swatch-height
-                               150))
-            (columns (or columns
-                         6))
-            ;; TODO: Width and Height padding (55, 120) parameterized?
-            (width (+ 55 (* columns swatch-width)))
-            (height (+ 120 (* (/ (length colors) columns) swatch-height)))
-            (background-color (or bg-color
-                                  (autothemer--color-value
-                                   (autothemer--select-color "Select Background color: "))))
-            (text-color (or text-color
-                            (autothemer--color-value
-                             (autothemer--select-color "Select Text color: "))))
-            (text-accent-color (or text-accent-color
-                                   (autothemer--color-value
-                                    (autothemer--select-color "Select Text accent color: "))))
+            (theme-name        (or theme-name (autothemer--theme-name autothemer--current-theme)))
+            (theme-description (or theme-description (autothemer--theme-description autothemer--current-theme)))
+            (theme-url         (or theme-url (lm-homepage theme-file) (read-string "Enter theme URL: " "https://github.com/")))
+
+            (font-family        (or font-family        (read-string "Font family name: " "Helvetica Neue")))
+            (swatch-width       (or swatch-width       (read-number "Swatch width: " 100)))
+            (swatch-height      (or swatch-height      (read-number "Swatch height: " 150)))
+            (columns            (or columns            (read-number "Number or columns: " 6)))
+            (page-top-margin    (or page-top-margin    (read-number "Page Top margin: " 120)))
+            (page-bottom-margin (or page-bottom-margin (read-number "Page Bottom margin: " 60)))
+            (page-left-margin   (or page-left-margin   (read-number "Page Left margin: " 30)))
+            (page-right-margin  (or page-right-margin  (read-number "Page Right margin: " 30)))
+            (h-space            (or h-space            (read-number "Swatch horiztonal spacing: " 10)))
+            (v-space            (or v-space            (read-number "Swatch vertical spacing: " 10)))
+
+            (rows (/ (length colors) columns))
+            (width (+ page-right-margin page-left-margin
+                      (* (- 1 columns) h-space)
+                      (* columns swatch-width)))
+            (height (+ page-top-margin page-bottom-margin
+                       (* v-space (- 1 rows))
+                       (* rows swatch-height)))
+
+            (background-color    (or bg-color            (autothemer--color-value (autothemer--select-color "Select Background color: "))))
+            (text-color          (or text-color          (autothemer--color-value (autothemer--select-color "Select Text color: "))))
+            (text-accent-color   (or text-accent-color   (autothemer--color-value (autothemer--select-color "Select Text accent color: "))))
+            (swatch-border-color (or swatch-border-color (autothemer--color-value (autothemer--select-color "Select swatch border color: "))))
+
             (svg-out-file (or svg-out-file (read-file-name (format "Enter a Filename to save SVG palette for %s." theme-name))))
             (svg-swatches (string-join
                             (-map-indexed
@@ -565,12 +582,12 @@ Swatch Template parameters:
                                                  (replace-regexp-in-string
                                                   (concat autotheme-name "-") ""
                                                   (format "%s" (autothemer--color-name it)))))
-                                         (x (+ 20 (* swatch-width (% index columns))))
-                                         (y (+ 90 (* swatch-height (/ index columns)))))
+                                         (x (+ page-left-margin (* (+ h-space swatch-width) (% index columns))))
+                                         (y (+ page-top-margin (* (+ v-space swatch-height)  (/ index columns)))))
                                      (format swatch-template
                                              x
                                              y
-                                             background-color
+                                             swatch-border-color
                                              color
                                              text-accent-color
                                              name)))
