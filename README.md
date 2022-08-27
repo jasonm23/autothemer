@@ -1,4 +1,6 @@
 # Autothemer
+
+[![Autothemer Tests](https://github.com/jasonm23/autothemer/actions/workflows/test.yml/badge.svg)](https://github.com/jasonm23/autothemer/actions/workflows/test.yml)
 [![NonGNU ELPA](https://elpa.nongnu.org/nongnu/autothemer.svg)](https://elpa.nongnu.org/nongnu/autothemer.html)
 
 Autothemer provides a thin layer on top of `deftheme` and
