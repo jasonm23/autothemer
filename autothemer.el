@@ -570,11 +570,11 @@ Swatch Template parameters:
 
             (rows (/ (length colors) columns))
             (width (+ page-right-margin page-left-margin
-                      (* (- 1 columns) h-space)
-                      (* columns swatch-width)))
+                      (* h-space columns)
+                      (* swatch-width columns)))
             (height (+ page-top-margin page-bottom-margin
-                       (* v-space (- 1 rows))
-                       (* rows swatch-height)))
+                       (* v-space rows)
+                       (* swatch-height (+ 1 rows))))
 
             (background-color    (or bg-color            (autothemer--color-value (autothemer--select-color "Select Background color: "))))
             (text-color          (or text-color          (autothemer--color-value (autothemer--select-color "Select Text color: "))))
