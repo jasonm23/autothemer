@@ -30,7 +30,7 @@ INFO
   -l ert \
   -l dash \
   -l ./autothemer.el \
-  -l ./tests/theme-example.el \
+  -l ./tests/autothemer-tests.el \
   --eval "(ert-run-tests-batch-and-exit)"
 exitcode=$?
 
