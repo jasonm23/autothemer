@@ -36,9 +36,17 @@
 (require 'lisp-mnt)
 (require 'subr-x)
 
-(cl-defstruct autothemer--color name value)
+(cl-defstruct
+    autothemer--color
+  name
+  value)
 
-(cl-defstruct autothemer--theme colors defined-faces name description)
+(cl-defstruct
+    autothemer--theme
+  colors
+  defined-faces
+  name
+  description)
 
 (defvar autothemer--current-theme nil
   "Internal variable of type `autothemer--theme' used by autothemer.
