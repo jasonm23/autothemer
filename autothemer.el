@@ -33,6 +33,8 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'dash)
+(require 'lisp-mnt)
+(require 'subr-x)
 
 (cl-defstruct autothemer--color name value)
 
