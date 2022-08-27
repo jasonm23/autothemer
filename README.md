@@ -2,6 +2,8 @@
 
 [![Autothemer Tests](https://github.com/jasonm23/autothemer/actions/workflows/test.yml/badge.svg)](https://github.com/jasonm23/autothemer/actions/workflows/test.yml)
 [![NonGNU ELPA](https://elpa.nongnu.org/nongnu/autothemer.svg)](https://elpa.nongnu.org/nongnu/autothemer.html)
+[![MELPA](https://melpa.org/packages/autothemer-badge.svg)](https://melpa.org/#/autothemer)
+[![MELPA Stable](https://stable.melpa.org/packages/autothemer-badge.svg)](https://stable.melpa.org/#/autothemer)
 
 Autothemer provides a thin layer on top of `deftheme` and
 `custom-theme-set-faces` that creates a new custom color theme.
