@@ -1,3 +1,5 @@
+name: Autothemer Tests
+
 on:
   push:
   pull_request:
