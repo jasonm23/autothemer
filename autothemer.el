@@ -449,17 +449,15 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
                 ((zerop sat) 0.0)
                 ((= r bri) (funcall normalize 0.0 g b)) ; dominant r
                 ((= g bri) (funcall normalize 120.0 b r)) ; dominant g
-                (t (funcall normalize 240.0 r g)))
+                (t (funcall normalize 240.0 r g))) ; dominant b
                360.0)
             sat
             bri))))
 
 (defun autothemer-hex-to-rgb (hex)
   "Fast convert HEX to `(r g b)'.
-
-Fast as in no error checking and a early escape for
-
-`r', `g', `b' will be values `0.9..1.1'"
+(Perf equal to wx color values C function.)
+`r', `g', `b' will be values `0..65535'"
   (let ((rgb (string-to-number (substring hex 1) 16)))
     (list
      (* #x101 (ash (logand #xFF0000 rgb) -16))
@@ -467,15 +465,15 @@ Fast as in no error checking and a early escape for
      (* #x101 (logand #xFF rgb)))))
 
 (defun autothemer-color-hue (hex-color)
-  "Return the HSL hue of HEX-COLOR."
+  "Return the HSV hue of HEX-COLOR."
   (car (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
 
 (defun autothemer-color-sat (hex-color)
-  "Return the HSL sat of HEX-COLOR."
+  "Return the HSV sat of HEX-COLOR."
   (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
 
 (defun autothemer-color-brightness (hex-color)
-  "Return the HSL luminance of HEX-COLOR."
+  "Return the HSV brightness of HEX-COLOR."
   (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
 
 (defun autothemer-darkest-order (a b)
@@ -504,11 +502,13 @@ Fast as in no error checking and a early escape for
 
 (defun autothemer-hue-sat-order (a b)
   "Return t if the hue and sat of a > b."
-  (let ((a (autothemer-color-hue (autothemer--color-value a)))
-        (b (autothemer-color-hue (autothemer--color-value b))))
-    (> a b)))
-
-(autothemer--color-to-hsv (autothemer-hex-to-rgb "#FF007F"))
+  (let ((a-hue (autothemer-color-hue (autothemer--color-value a)))
+        (b-hue (autothemer-color-hue (autothemer--color-value b)))
+        (a-sat (autothemer-color-sat (autothemer--color-value a)))
+        (b-sat (autothemer-color-sat (autothemer--color-value b)))
+        (sort-hash-fmt "%016s-%016s"))
+    (string> (format sort-hash-fmt a-hue a-sat)
+             (format sort-hash-fmt b-hue b-sat)))
 
 (defun autothemer-sort-palette (theme-colors &optional fn)
   "Produce a list of sorted THEME-COLORS using FN.
@@ -526,7 +526,8 @@ There are also `autothemer-hue-order' and `autothemer-saturated-order'"
 (defun autothemer-generate-palette-svg (&optional options)
   "Create an SVG palette image for a theme.
 
-Optionally supply OPTIONS, a plist (all keys are optional):
+Optionally supply a plist of OPTIONS (all keys are optional, 
+required values will default or prompt interactively.):
 
     :theme-file - theme filename
     :theme-name - override the title found in :theme-file
@@ -537,12 +538,12 @@ Optionally supply OPTIONS, a plist (all keys are optional):
     :swatch-rotate - degrees of rotation for swatch (default: 45)
     :columns - number of columns for each palette row (default: 6)
     :page-template - see page-template below
-    :page-top-margin - (default ...)
-    :page-right-margin - (default ...)
-    :page-bottom-margin - (default ...)
-    :page-left-margin - (default ...)
-    :h-space - (default ...)
-    :v-space - (default ...)
+    :page-top-margin - (default 120)
+    :page-right-margin - (default 30)
+    :page-bottom-margin - (default 60)
+    :page-left-margin - (default 30)
+    :h-space - (default 10)
+    :v-space - (default 10)
     :swatch-template - see swatch-template below
     :font-family - font name to use in the generated SVG
     :bg-color
