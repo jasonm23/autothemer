@@ -7,7 +7,7 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.9
+;; Version: 0.2.10
 ;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
 ;;
 ;;; License:
@@ -591,7 +591,7 @@ Swatch Template parameters:
                                                   (concat autotheme-name "-") ""
                                                   (format "%s" (autothemer--color-name it)))))
                                          (x (+ page-left-margin (* (+ h-space swatch-width) (% index columns))))
-                                         (y (+ page-top-margin (* (+ v-space swatch-height)  (/ index columns)))))
+                                         (y (+ page-top-margin (* (+ v-space swatch-height) (/ index columns)))))
                                      (format swatch-template
                                              x
                                              y
