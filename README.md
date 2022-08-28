@@ -5,15 +5,15 @@
 [![MELPA](https://melpa.org/packages/autothemer-badge.svg)](https://melpa.org/#/autothemer)
 [![MELPA Stable](https://stable.melpa.org/packages/autothemer-badge.svg)](https://stable.melpa.org/#/autothemer)
 
-Autothemer provides a thin layer on top of `deftheme` and
-`custom-theme-set-faces` that creates a new custom color theme.
+Autothemer provides `autothemer-deftheme` a macro wrapper for `deftheme` and
+`custom-theme-set-faces` whicg  creates a custom color theme.
 
-## Usage
+## Overview
 
-Autothemer requires a set of color classes, a color palette and
-simplified face specifications to be applied to Emacs.
+`autothemer-deftheme` uses a color class(es)/palette(s) which simplify the `deftheme` style and
+simplified face specifications to be applied to Emacs faces.
 
-Take a look at the example below.
+See the example below.
 
 ```lisp
 (autothemer-deftheme example-name "Autothemer example..."
@@ -22,7 +22,7 @@ Take a look at the example below.
   ((((class color) (min-colors #xFFFFFF))
     ((class color) (min-colors #xFF)))
 
-    ;; Specify the color palette for each of the classes above.
+    ;; Specify the color palette, color columns correspond to each of the classes above.
     (example-red    "#781210" "#FF0000")
     (example-green  "#22881F" "#00D700")
     (example-blue   "#212288" "#0000FF")
@@ -31,12 +31,15 @@ Take a look at the example below.
     (example-orange "#E06500" "#FF6600")
     (example-cyan   "#22DDFF" "#00FFFF"))
 
-    ;; specifications for Emacs faces.
+    ;; Specifications for Emacs faces.
+    ;; Simpler than deftheme, just specify a face name and 
+    ;; a plist of face definitions (nested for :underline, :box etc.)
     ((button (:underline t :weight 'bold :foreground example-yellow))
      (error  (:foreground example-red)))
 
     ;; Forms after the face specifications are evaluated.
     ;; (palette vars can be used, read below for details.)
+    
     (custom-theme-set-variables 'example-name
         `(ansi-color-names-vector [,example-red
                                    ,example-green
@@ -49,22 +52,32 @@ Take a look at the example below.
 
 ## Faces and Color Classes
 
-One of the things that makes writing themes for Emacs difficult is the syntax of `defface`, the macro used to configre Emacs `face` definitions.
+One of the things that makes writing themes for Emacs painful is the syntax of `defface`, 
+the macro used to configre Emacs `face` definitions.
 
-Because the syntax isn't particularly developer friendly, it usually results in themes with limited support for different color displays, usually GUI / 24bit themes are made, and the results in the terminal are often sub par.  On occassion a theme does appear that provides better support for multiple display types, but due to the manual work involved in adding face specs, mode support is limited and development often stalls.
+Because the syntax isn't developer friendly it usually results in themes with limited support. Especially for
+different color displays. Usually GUI / 24bit themes are made, and the results in the terminal are often sub par.
+On occassion a theme does appear that provides better support for multiple display types, but due to the manual work
+involved in adding face specs, mode support is limited and development often stalls.
 
-On the plus side the complexity of face specifcations means we can in theory design themes that support any display with any number of colors, we can support dark and light background modes.  Until now it's been hard to fully exploit the potential.
+On the plus side the complexity of face specifcations means we can in theory design themes that support any display
+with any number of colors, we can support dark and light background modes.  Until now it's been hard to fully 
+exploit the potential.
 
-Autothemer solves most of the problems that a theme developer would face.
+Autothemer attempts to solve the problems that a theme developer faces. By defining a simple set of
+color class rules we can remove repetitive face specs.  
 
-By defining a simple set of color class rules we can remove swathes of repetitive face specs.  Looking again at the example above.
+Looking again at the example above.
 
 ```lisp
 (((class color) (min-colors #xFFFFFF))
  ((class color) (min-colors #xFF)))
 ```
 
-Here we've setup a color class for 16.8million (0xFFFFFF) color display i.e. 24bit,  which will be read from first column in the palette.  We've then setup a color class for 256 (0xFF) color displays i.e. Xterm-256color, this will be read from the second column.
+Here we've setup a color class for 16.8million (0xFFFFFF) color display i.e. 24bit,  
+which will be read from first column in the palette.  Next we setup a color class for 256 (0xFF) color 
+displays i.e. `xterm-256color`, the color palette values for this will be read from 
+the corresponding second column.
 
 We can setup as many columns as we'd like to support, here's a few more examples.
 
@@ -86,11 +99,14 @@ For a dark background 24bit
 ((class color) (min-colors #xFFFFFF) (background dark))
 ```
 
-You can read more about defining faces in the Emacs manual, [display types and class color is covered here.](https://www.gnu.org/software/emacs/manual/html_node/elisp/Defining-Faces.html)
+You can read more about defining faces in the Emacs manual, 
+[display types and class color is covered here.](https://www.gnu.org/software/emacs/manual/html_node/elisp/Defining-Faces.html)
 
 ### Palette
 
-The palette definition is specified as a list of lists, each of the nested lists is a color name and then color values that correspond to each of the display/color classes defined above.
+The palette definition is specified as a list of lists, each of the nested lists is a
+color name and then color values that correspond to each of the display/color classes 
+defined above.
 
 You can set color values as nil and the first color to the left will be used.
 
@@ -106,8 +122,8 @@ For example, if we have three display classes defined, 256, 24bit, 16 color:
 ```
 
 Note we only specify 256 color mode's `my-red` value, and leave the
-others as nil.  Autothemer will set the others with the value
-`#FF0000`.
+others as nil.  Autothemer will copy the value  `#FF0000` to the other
+color classes at the same paletee index if they are nil.
 
 ### Simplified face specs
 
@@ -137,7 +153,8 @@ affected.
 - `:slant`
 - `:style`
 
-(NOTE: there may be others I have missed!)
+(NOTE: there may be others I have missed. Please open an issue if you find
+another attribute that needs quoting.)
 
 ### Body / Evaluated Forms
 
@@ -145,12 +162,9 @@ After defining the display specs, palette and simplified face specs,
 you can include other code to be evaluated.
 
 Be aware that colors named in the palette will need to be `,`
-comma-ed.  For example if you wanted to use the color `my-red` in a
-form, you would refer to it as `,my-red`, so that it's evaluated
-properly.
-
-(This section of the README will be updated as I find any other
-gotchas.)
+comma-ed so they evaluate correctly.  For example if you wanted to use 
+the color `my-red` somewhere in the `body` section, you would refer to it
+as `,my-red`, so that it's evaluated properly.
 
 ### Auto generating missing specs
 
@@ -179,6 +193,7 @@ use, you can define simple advice on `autothemer-deftheme` to do so:
                   (cadr e)))
           (cdr palette)))
 ```
+
 If you place the advice definition before the autothemer-generated theme
 is loaded, e.g. `my-red` from the example above will be available as a 
 variable that can be used in other parts of your emacs configuration.
@@ -191,25 +206,19 @@ Since version 0.2.8 it is possible to select a color from the palette (using the
 
 ![](https://raw.githubusercontent.com/jasonm23/autothemer/images/autothemer-select-color-01.png)
 
-You'd need to do something like this to insert a color name or color value: 
+There are also commands to insert a selected color name or it's value.
 
-```lisp
-(require 'autothemer)
+```
+M-x  autothemer-insert-color-name
+```
+and...
 
-(defun insert-autothemer-color-value () 
-  "Select and insert a color value from `autothemer--current-theme`.")
-  (interactive)
-  (insert (autothemer--color-value (autothemer-select-color)))
-  
-(defun insert-autothemer-color-name)
-  "Select and insert a color name from `autothemer--current-theme`.")
-  (interactive)
-  (insert (autothemer--color-name (autothemer-select-color)))
+```
+M-x  autothemer-insert-color
 ```
 
 If `autothemer--current-theme` is `nil`, you'll need to eval an autothemer based
 theme before use.
-
 
 ### Generate a SVG image of the palette
 
@@ -438,11 +447,12 @@ Make sure you eval all the theme's elisp files before enabling the theme.)
 - [Orangey Bits](https://github.com/emacsfodder/emacs-theme-orangey-bits)
 - [Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
 
-If you are creating themes with Autothemer, please let us know (you can email the maintainer.)
+If you are creating themes with Autothemer, please let us know, you can add the theme info to 
+README and open a  pull request.
 
 ### Contributing
 
-We welcome all issues and pull requests, for review by the project author.
+Contributions are welcome, we will review all issues and PRs.
 
 ### Licence
 
