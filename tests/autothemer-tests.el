@@ -1,4 +1,4 @@
-;; theme-example.el
+;; autothemer-tests.el
 
 ;;; Code:
 
@@ -122,4 +122,4 @@
      (button error)
      "theme-example" "Autothemer example..."))
 
-;;; theme-example.el ends here
+;;; autothemer-tests.el ends here
