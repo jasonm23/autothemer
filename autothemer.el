@@ -136,8 +136,8 @@ bindings within both the REDUCED-SPECS and the BODY."
   "Return the distance in rgb space between COLOR and AUTOTHEMER-COLOR.
 Here, COLOR is an Emacs color specification and AUTOTHEMER-COLOR is of
 type `autothemer--color'."
-  (let ((rgb-1 (color-values color))
-        (rgb-2 (color-values (autothemer--color-value autothemer-color))))
+  (let ((rgb-1 (autothemer-hex-to-rgb color))
+        (rgb-2 (autothemer-hex-to-rgb (autothemer--color-value autothemer-color))))
     (-sum (--zip-with (abs (- it other)) rgb-1 rgb-2))))
 
 (defun autothemer--find-closest-color (colors color)
@@ -426,6 +426,101 @@ Colors are from `autothemer--current-theme'."
          (0 (rainbow-colorize-by-assoc (autothemer-colorize-alist))))))
   (font-lock-add-keywords nil autothemer--colors-font-lock-keywords t))
 
+(defun autothemer--color-to-hsv (rgb)
+  "Convert RGB, a list of `(r g b)' to list `(h s v)'.
+The `r' `g' `b' values can range between `0..65535'.
+
+In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
+  (cl-destructuring-bind
+      (r g b) rgb
+    (let*
+        ((bri (max r g b))
+         (delta (- bri (min r g b)))
+         (sat (if (cl-plusp bri)
+                  (/ delta bri)
+                0.0))
+         (normalize #'(lambda
+                        (constant right left)
+                        (let ((hue (+ constant (/ (* 60.0 (- right left)) delta))))
+                          (if (cl-minusp hue)
+                              (+ hue 360.0)
+                            hue)))))
+      (list (/ (cond
+                ((zerop sat) 0.0)
+                ((= r bri) (funcall normalize 0.0 g b)) ; dominant r
+                ((= g bri) (funcall normalize 120.0 b r)) ; dominant g
+                (t (funcall normalize 240.0 r g)))
+               360.0)
+            sat
+            bri))))
+
+(defun autothemer-hex-to-rgb (hex)
+  "Fast convert HEX to `(r g b)'.
+
+Fast as in no error checking and a early escape for
+
+`r', `g', `b' will be values `0.9..1.1'"
+  (let ((rgb (string-to-number (substring hex 1) 16)))
+    (list
+     (* #x101 (ash (logand #xFF0000 rgb) -16))
+     (* #x101 (ash (logand #xFF00 rgb) -8))
+     (* #x101 (logand #xFF rgb)))))
+
+(defun autothemer-color-hue (hex-color)
+  "Return the HSL hue of HEX-COLOR."
+  (car (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+(defun autothemer-color-sat (hex-color)
+  "Return the HSL sat of HEX-COLOR."
+  (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+(defun autothemer-color-brightness (hex-color)
+  "Return the HSL luminance of HEX-COLOR."
+  (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+(defun autothemer-darkest-order (a b)
+  "Return t if the darkness of A > B."
+  (let ((a (autothemer-color-brightness (autothemer--color-value a)))
+        (b (autothemer-color-brightness (autothemer--color-value b))))
+    (> b a)))
+
+(defun autothemer-lightest-order (a b)
+  "Return t if the lightness of A > B."
+  (let ((a (autothemer-color-brightness (autothemer--color-value a)))
+        (b (autothemer-color-brightness (autothemer--color-value b))))
+      (> a b)))
+
+(defun autothemer-saturated-order (a b)
+  "Return t if the saturation of A > B."
+  (let ((a (autothemer-color-sat (autothemer--color-value a)))
+        (b (autothemer-color-sat (autothemer--color-value b))))
+      (> a b)))
+
+(defun autothemer-hue-order (a b)
+  "Return t if the hue of A > B."
+  (let ((a (autothemer-color-hue (autothemer--color-value a)))
+        (b (autothemer-color-hue (autothemer--color-value b))))
+      (> a b)))
+
+(defun autothemer-hue-sat-order (a b)
+  "Return t if the hue and sat of a > b."
+  (let ((a (autothemer-color-hue (autothemer--color-value a)))
+        (b (autothemer-color-hue (autothemer--color-value b))))
+    (> a b)))
+
+(autothemer--color-to-hsv (autothemer-hex-to-rgb "#FF007F"))
+
+(defun autothemer-sort-palette (theme-colors &optional fn)
+  "Produce a list of sorted THEME-COLORS using FN.
+
+If FN is nil, sort by default FN `autothemer-darkest-order'.
+
+`autothemer-lightest-order' is available to balance the force.
+
+There are also `autothemer-hue-order' and `autothemer-saturated-order'"
+  (let ((fn (or fn 'autothemer-darkest-order)))
+     (-sort fn theme-colors)))
+
 ;;; SVG Palette generator...
 
 (defun autothemer-generate-palette-svg (&optional options)
@@ -439,6 +534,7 @@ Optionally supply OPTIONS, a plist (all keys are optional):
     :theme-url - override the url found in :theme-file
     :swatch-width - px spacing width of a color swatch (default: 100)
     :swatch-height - px spacing height of a color swatch (default: 150)
+    :swatch-rotate - degrees of rotation for swatch (default: 45)
     :columns - number of columns for each palette row (default: 6)
     :page-template - see page-template below
     :page-top-margin - (default ...)
@@ -453,6 +549,7 @@ Optionally supply OPTIONS, a plist (all keys are optional):
     :text-color
     :text-accent-color
     :swatch-border-color
+    :sort-palette
     :svg-out-file
 
 For advanced customization the :page-template and :swatch-template can be
@@ -488,8 +585,10 @@ Swatch Template parameters:
      theme-description
      theme-url
 
+     sort-palette
      swatch-width
      swatch-height
+     swatch-rotate
      columns
 
      page-top-margin
@@ -536,18 +635,20 @@ Swatch Template parameters:
                          |    </a>
                          |  </g>
                          |  <g transform=\"translate(70,-40)\">
-                         |  %10$s
+                         |    %10$s
                          |  </g>
                          |</svg>
                          |")))
 
             (swatch-template
              (or swatch-template
-              (autothemer--unindent "<g transform=\"translate(%1$s,%2$s),rotate(45)\">
+              (autothemer--unindent "<g transform=\"translate(%1$s,%2$s),rotate(%9$s)\">
                          | <ellipse cx=\"70\" cy=\"70\" rx=\"45\" ry=\"45\" id=\"background-color\" fill=\"%3$s\"/>
                          | <ellipse cx=\"70\" cy=\"70\" rx=\"42\" ry=\"42\" id=\"color\" fill=\"%4$s\"/>
                          | <text style=\"font-size:7pt\" font-weight=\"bold\" x=\"52\" y=\"125\" id=\"color-name\">%6$s</text>
                          | <text style=\"font-size:7pt; fill:%5$s;\" font-weight=\"bold\" x=\"52\" y=\"134\" id=\"color\">%4$s</text>
+                         | <!-- Rect below is for debug set stroke width to be visible -->
+                         |   <rect x=\"0\" y=\"0\" width=\"%7$spx\" height=\"%8$spx\" class=\"debug-rect\" fill-opacity=\"0.0\" stroke-width=\"0.0mm\" stroke=\"#FF8000\"/>
                          |</g>
                          |")))
 
@@ -560,6 +661,7 @@ Swatch Template parameters:
             (font-family        (or font-family        (read-string "Font family name: " "Helvetica Neue")))
             (swatch-width       (or swatch-width       (read-number "Swatch width: " 100)))
             (swatch-height      (or swatch-height      (read-number "Swatch height: " 150)))
+            (swatch-rotate      (or swatch-rotate      (read-number "Swatch rotate: " 45)))
             (columns            (or columns            (read-number "Number or columns: " 6)))
             (page-top-margin    (or page-top-margin    (read-number "Page Top margin: " 120)))
             (page-bottom-margin (or page-bottom-margin (read-number "Page Bottom margin: " 60)))
@@ -598,8 +700,12 @@ Swatch Template parameters:
                                              swatch-border-color
                                              color
                                              text-accent-color
-                                             name)))
-                             colors)
+                                             name swatch-width swatch-height swatch-rotate)))
+                             (if sort-palette
+                                 (if (eql t sort-palette)
+                                     (autothemer-sort-palette colors)
+                                   (autothemer-sort-palette colors (intern sort-palette)))
+                                 colors))
                             "\n")))
        (with-temp-file svg-out-file
          (insert
