@@ -501,14 +501,14 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
       (> a b)))
 
 (defun autothemer-hue-sat-order (a b)
-  "Return t if the hue and sat of a > b."
+  "Return t if the hue and sat of A > B."
   (let ((a-hue (autothemer-color-hue (autothemer--color-value a)))
         (b-hue (autothemer-color-hue (autothemer--color-value b)))
         (a-sat (autothemer-color-sat (autothemer--color-value a)))
         (b-sat (autothemer-color-sat (autothemer--color-value b)))
         (sort-hash-fmt "%016s-%016s"))
     (string> (format sort-hash-fmt a-hue a-sat)
-             (format sort-hash-fmt b-hue b-sat)))
+             (format sort-hash-fmt b-hue b-sat))))
 
 (defun autothemer-sort-palette (theme-colors &optional fn)
   "Produce a list of sorted THEME-COLORS using FN.

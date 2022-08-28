@@ -25,13 +25,14 @@ $("$EMACS" --version)
 INFO
 
 "$EMACS" --batch \
+  -eval "(setq load-prefer-newer t)" \
   -eval "(add-to-list 'load-path \"${dash}\")" \
   -eval "(add-to-list 'load-path \".\")" \
   -l ert \
   -l dash \
-  -l ./autothemer.el \
-  -l ./tests/autothemer-tests.el \
-  --eval "(ert-run-tests-batch-and-exit)"
+  -l autothemer.el \
+  -l tests/autothemer-tests.el \
+  -f ert-run-tests-batch-and-exit
 exitcode=$?
 
 echo "
