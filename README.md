@@ -1,12 +1,15 @@
 # Autothemer
 
 [![Autothemer Tests](https://github.com/jasonm23/autothemer/actions/workflows/test.yml/badge.svg)](https://github.com/jasonm23/autothemer/actions/workflows/test.yml)
+
 [![NonGNU ELPA](https://elpa.nongnu.org/nongnu/autothemer.svg)](https://elpa.nongnu.org/nongnu/autothemer.html)
 [![MELPA](https://melpa.org/packages/autothemer-badge.svg)](https://melpa.org/#/autothemer)
 [![MELPA Stable](https://stable.melpa.org/packages/autothemer-badge.svg)](https://stable.melpa.org/#/autothemer)
 
 Autothemer provides `autothemer-deftheme` a macro wrapper for `deftheme` and
-`custom-theme-set-faces` whicg  creates a custom color theme.
+`custom-theme-set-faces` which creates a custom color theme.
+
+The package also includes some useful theme development features... read on.
 
 ## Overview
 
@@ -171,15 +174,18 @@ as `,my-red`, so that it's evaluated properly.
 You can automatically generate specs for faces that are not in your
 theme using the command
 
-`M-x autothemer-generate-templates`
+```
+M-x autothemer-generate-templates
+```
+There's an alternative command to use if you'd like to filter by regexp.
 
-This will create a new buffer with simplified specs for all unthemed
-faces.  Colors will be selected from the theme palette based on the
+```
+M-x autothemer-generate-templates-filtered
+```
+
+These commands will create a new buffer with simplified specs for all the 
+unthemed faces (or the subset you filtered by).  Colors will be selected from the theme palette based on the
 nearest RGB distance to the un-themed color.
-
-We recommend thoroughly reviewing the auto generated themes so that
-you produce a high quality theme.  Autothemer doesn't replace good
-judgement and taste!
 
 ### Re-using the color palette
 
@@ -197,6 +203,42 @@ use, you can define simple advice on `autothemer-deftheme` to do so:
 If you place the advice definition before the autothemer-generated theme
 is loaded, e.g. `my-red` from the example above will be available as a 
 variable that can be used in other parts of your emacs configuration.
+
+### Let palette
+
+Alternatively you can create a let-like block using the macro `autothemer-let-palette`.  
+You will need to load/eval the required autothemer theme source (not byte-compiled), before
+executing it.
+
+The palette color values will autocomplete, and you can check the palette 
+with `M-x  macrostep-expand`(place the cursor to the left of the macro call.)
+
+![macrostep-expand on autothemer-let-palette](https://user-images.githubusercontent.com/71587/187093078-dfffa28b-25c4-4e0f-a5b4-158e1cbdde16.png)
+
+### Colorize color-names from the palette
+
+Color names in the palette can be colorized, in any buffer.  
+Make sure there's a current theme in `autothemer--current-theme` (eval your autothemer based theme from source, not byte-code) and use:
+
+```
+M-x autothemer-colorize
+```
+For example, with [Soothe Theme](https://github.com/emacsfodder/emacs-soothe-theme) viewing `soothe-tva.el`:
+
+![colorize](https://user-images.githubusercontent.com/71587/187092780-d97cab25-ddb7-424f-aab7-a366584be0e4.png)
+
+For even more feedback, install and use the excellet [Fontify-Face](https://github.com/Fuco1/fontify-face) so you 
+can see the current face definitions too.
+
+![fontify-face](https://user-images.githubusercontent.com/71587/187092952-10e5de99-26e9-4248-a18b-10a1ab2a54f5.png)
+
+In these images `rainbow-mode` is also swiched on, so we can see hex colors and system palette names colorized.
+
+```
+M-x rainbow-mode
+```
+
+To edit colors interatively [Kurecolor](https://github.com/emacsfodder/kurecolor) will serve you well.
 
 ### Select colors from the palette
 
