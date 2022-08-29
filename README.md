@@ -168,7 +168,7 @@ affected.
 - `:slant`
 - `:style`
 
-(NOTE: there may be others I have missed. Please open an issue if you find
+(NOTE: there may be others I have missed. Please open an [issue] if you find
 another attribute that needs quoting.)
 
 ### Body / Evaluated Forms
@@ -504,8 +504,9 @@ Make sure you eval all the theme's elisp files before enabling the theme.)
 - [emacsfodder/Cyanometric](https://github.com/emacsfodder/emacs-theme-cyanometric)
 - [emacsfodder/Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
 
-If you are creating themes with Autothemer, please let us know, you can add the theme info to 
-README and open a pull request.
+If you are creating themes with Autothemer, please let us know, you can add the
+theme info to README and open a pull request. If you haven't released it as a
+package, via a common source, open an [issue], we can help.
 
 ### Contributing
 
@@ -516,3 +517,4 @@ See [CONTRIBUTING](CONTRIBUTING.md)
 See [LICENCE](LICENCE)
 
 [Autothemer]: https://github.com/jasonm23/autothemer
+[issue]: https://github.com/jasonm23/autothemer/issues/new/choose
