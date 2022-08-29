@@ -73,7 +73,8 @@ body:
         - "Terminal other (tell us about it in the description.)"
         - "Daemon"
     validations:
-      required: false  - type: dropdown
+      required: false  
+  - type: dropdown
     id: os
     attributes:
       label: "OS"
