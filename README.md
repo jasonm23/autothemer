@@ -494,7 +494,7 @@ README and open a  pull request.
 
 ### Contributing
 
-Contributions are welcome, we will review all issues and PRs.
+See [CONTRIBUTING](CONTRIBUTING.md)
 
 ### Licence
 
