@@ -11,6 +11,18 @@ Autothemer provides `autothemer-deftheme` a macro wrapper for `deftheme` and
 
 The package also includes some useful theme development features... read on.
 
+## News
+
+We've added new things to AutoThemer in recent weeks:
+
+- [Updates to the list of themes using autothemer](#themes-using-autothemer) (More to come...)
+- [Theme Variant Architecture/TVA](#tva) A convention for developing themes with multiple versions.
+- [Generate a cool SVG Palette image](#generate-a-svg-image-of-the-palette) Generate a cool SVG Palette image [like this one...](https://raw.githubusercontent.com/emacsfodder/emacs-theme-orangey-bits/master/palette.svg)
+- [Select colors from the theme in development](#select-colors-from-the-palette) Select, and insert a palette color name, or it's color value.
+- [Colorize palette color names](#colorize-color-names-from-the-palette)
+- [`autothemer-let-palette`](#let-palette)
+- [Generate missing specs, updated to allow filtering](#auto-generating-missing-specs)
+
 ## Overview
 
 `autothemer-deftheme` uses a color class(es)/palette(s) which simplify the `deftheme` style and
