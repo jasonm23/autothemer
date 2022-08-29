@@ -1,8 +1,8 @@
 ;;; autothemer.el --- Conveniently define themes -*- lexical-binding: t -*-
 ;;
-;; Author: Sebastian Sturm
+;; Authors: Sebastian Sturm, Jason Milkins
 ;;
-;; Copyright 2015-2022 Sebastian Sturm
+;; Copyright 2015-2022 Sebastian Sturm, Jason Milkins
 ;;
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;

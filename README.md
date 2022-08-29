@@ -20,7 +20,7 @@ We've added new things to AutoThemer in recent weeks:
 - [Generate a cool SVG Palette image](#generate-a-svg-image-of-the-palette) Generate a cool SVG Palette image [like this one...](https://raw.githubusercontent.com/emacsfodder/emacs-theme-orangey-bits/master/palette.svg)
 - [Select colors from the theme in development](#select-colors-from-the-palette) Select, and insert a palette color name, or it's color value.
 - [Colorize palette color names](#colorize-color-names-from-the-palette)
-- [`autothemer-let-palette`](#let-palette)
+- [Autothemer-let-palette macro](#let-palette)
 - [Generate missing specs, updated to allow filtering](#auto-generating-missing-specs)
 
 ## Overview
@@ -225,7 +225,7 @@ executing it.
 The palette color values will autocomplete, and you can check the palette 
 with `M-x  macrostep-expand`(place the cursor to the left of the macro call.)
 
-![macrostep-expand on autothemer-let-palette](https://user-images.githubusercontent.com/71587/187093078-dfffa28b-25c4-4e0f-a5b4-158e1cbdde16.png)
+![macrostep-expand on autothemer-let-palette](https://raw.githubusercontent.com/jasonm23/autothemer/images/let-palette-macrostep-expand.png)
 
 ### Colorize color-names from the palette
 
@@ -237,12 +237,12 @@ M-x autothemer-colorize
 ```
 For example, with [Soothe Theme](https://github.com/emacsfodder/emacs-soothe-theme) viewing `soothe-tva.el`:
 
-![colorize](https://user-images.githubusercontent.com/71587/187092780-d97cab25-ddb7-424f-aab7-a366584be0e4.png)
+![colorize](https://raw.githubusercontent.com/jasonm23/autothemer/images/autothemer-colorize.png)
 
 For even more feedback, install and use the excellet [Fontify-Face](https://github.com/Fuco1/fontify-face) so you 
 can see the current face definitions too.
 
-![fontify-face](https://user-images.githubusercontent.com/71587/187092952-10e5de99-26e9-4248-a18b-10a1ab2a54f5.png)
+![fontify-face](https://raw.githubusercontent.com/jasonm23/autothemer/images/autothemer-colorize-and-fontify-face.png)
 
 In these images `rainbow-mode` is also swiched on, so we can see hex colors and system palette names colorized.
 
@@ -316,7 +316,6 @@ For example:
 
 ##### :page-template and :swatch-template
 
-
 For advanced customization the options `:page-template` and `:swatch-template`,
 can supplied as customized SVG templates.
 
@@ -387,6 +386,13 @@ The builtin swatch template:
  <text style="font-size:7pt; fill:%5$s;" font-weight="bold" x="52" y="134" id="color">%4$s</text>
 </g>
 ```
+
+#### SVG palette templates in the Wiki
+
+I'll add some more palette SVG templates in the Wiki, link to any more you create there too.  I think gists are a good way to share them.
+
+[Wiki page here](/jasonm23/autothemer/wiki/Palette-SVG-Templates)
+
 
 # TVA
 
