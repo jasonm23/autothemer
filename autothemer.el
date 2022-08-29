@@ -7,7 +7,7 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.9
+;; Version: 0.2.10
 ;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
 ;;
 ;;; License:
@@ -36,9 +36,17 @@
 (require 'lisp-mnt)
 (require 'subr-x)
 
-(cl-defstruct autothemer--color name value)
+(cl-defstruct
+    autothemer--color
+  name
+  value)
 
-(cl-defstruct autothemer--theme colors defined-faces name description)
+(cl-defstruct
+    autothemer--theme
+  colors
+  defined-faces
+  name
+  description)
 
 (defvar autothemer--current-theme nil
   "Internal variable of type `autothemer--theme' used by autothemer.
@@ -128,8 +136,8 @@ bindings within both the REDUCED-SPECS and the BODY."
   "Return the distance in rgb space between COLOR and AUTOTHEMER-COLOR.
 Here, COLOR is an Emacs color specification and AUTOTHEMER-COLOR is of
 type `autothemer--color'."
-  (let ((rgb-1 (color-values color))
-        (rgb-2 (color-values (autothemer--color-value autothemer-color))))
+  (let ((rgb-1 (autothemer-hex-to-rgb color))
+        (rgb-2 (autothemer-hex-to-rgb (autothemer--color-value autothemer-color))))
     (-sum (--zip-with (abs (- it other)) rgb-1 rgb-2))))
 
 (defun autothemer--find-closest-color (colors color)
@@ -308,7 +316,9 @@ Otherwise, append NEW-COLUMN to every element of LISTS."
 Search the `autothemer--current-theme' color palette for COLOR-NAME
 and returns a color in the form of `autothemer--color' struct.
 
-See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-value'."
+See also `autothemer--color-p',
+         `autothemer--color-name',
+         `autothemer--color-value'."
   (autothemer--current-theme-guard)
   (--find
    (eql (intern color-name)
@@ -321,7 +331,9 @@ Current palette is read from `autothemer--current-theme'.
 
 The selected color will be in the form of a `autothemer--color'
 
-See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-value'."
+See also `autothemer--color-p',
+         `autothemer--color-name',
+         `autothemer--color-value'."
   (autothemer--current-theme-guard)
   (let*
       ((selected
@@ -345,7 +357,7 @@ See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-val
     (autothemer--get-color color-name)))
 
 (defun autothemer-insert-color ()
-  "Interactively select and insert a color from the current autotheme palette."
+  "Select and insert a color from the current autotheme palette."
   (interactive)
   (autothemer--current-theme-guard)
   (let ((color (autothemer--color-value
@@ -353,7 +365,7 @@ See also `autothemer--color-p', `autothemer--color-name', `autothemer--color-val
     (insert color)))
 
 (defun autothemer-insert-color-name ()
-  "Interactively select and insert a color name from the current autotheme palette."
+  "Select and insert a color name from the current autotheme palette."
   (interactive)
   (autothemer--current-theme-guard)
   (let ((color-name (autothemer--color-name
@@ -379,12 +391,143 @@ If PLIST is nil, ARGS are bound to BODY nil values."
   "Unindent string S marked with | chars."
   (replace-regexp-in-string "^ *|" "" s))
 
+;;; let palette...
+(defmacro autothemer-let-palette (&rest body)
+  "Provide a let block for BODY from `autothemer--current-theme'.
+
+Load/eval the required autothemer theme source (not
+byte-compiled) to set `autothemer--current-theme'."
+  (autothemer--current-theme-guard)
+  `(let ,(--map (list (autothemer--color-name it) (autothemer--color-value it))
+                (autothemer--theme-colors autothemer--current-theme))
+     ,@body))
+
+;;; Colorize alist for rainbow-mode
+(defun autothemer-colorize-alist ()
+  "Generate an alist for use with rainbow-mode.
+
+To colorize use:
+
+    (rainbow-colorize-by-assoc (autothemer-colorize-alist))
+
+Colors are from `autothemer--current-theme'."
+  (autothemer--current-theme-guard)
+  (--map (cons (format "%s" (autothemer--color-name it))
+               (autothemer--color-value it))
+    (autothemer--theme-colors autothemer--current-theme)))
+
+(defvar autothemer--colors-font-lock-keywords nil)
+
+(defun autothemer-colorize ()
+  "Colorize using rainbow-mode."
+  (interactive)
+  (setq autothemer--colors-font-lock-keywords
+      `((,(regexp-opt (mapcar 'car (autothemer-colorize-alist)) 'words)
+         (0 (rainbow-colorize-by-assoc (autothemer-colorize-alist))))))
+  (font-lock-add-keywords nil autothemer--colors-font-lock-keywords t))
+
+(defun autothemer--color-to-hsv (rgb)
+  "Convert RGB, a list of `(r g b)' to list `(h s v)'.
+The `r' `g' `b' values can range between `0..65535'.
+
+In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
+  (cl-destructuring-bind
+      (r g b) rgb
+    (let*
+        ((bri (max r g b))
+         (delta (- bri (min r g b)))
+         (sat (if (cl-plusp bri)
+                  (/ delta bri)
+                0.0))
+         (normalize #'(lambda
+                        (constant right left)
+                        (let ((hue (+ constant (/ (* 60.0 (- right left)) delta))))
+                          (if (cl-minusp hue)
+                              (+ hue 360.0)
+                            hue)))))
+      (list (/ (cond
+                ((zerop sat) 0.0)
+                ((= r bri) (funcall normalize 0.0 g b)) ; dominant r
+                ((= g bri) (funcall normalize 120.0 b r)) ; dominant g
+                (t (funcall normalize 240.0 r g))) ; dominant b
+               360.0)
+            sat
+            bri))))
+
+(defun autothemer-hex-to-rgb (hex)
+  "Fast convert HEX to `(r g b)'.
+(Perf equal to wx color values C function.)
+`r', `g', `b' will be values `0..65535'"
+  (let ((rgb (string-to-number (substring hex 1) 16)))
+    (list
+     (* #x101 (ash (logand #xFF0000 rgb) -16))
+     (* #x101 (ash (logand #xFF00 rgb) -8))
+     (* #x101 (logand #xFF rgb)))))
+
+(defun autothemer-color-hue (hex-color)
+  "Return the HSV hue of HEX-COLOR."
+  (car (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+(defun autothemer-color-sat (hex-color)
+  "Return the HSV sat of HEX-COLOR."
+  (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+(defun autothemer-color-brightness (hex-color)
+  "Return the HSV brightness of HEX-COLOR."
+  (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+(defun autothemer-darkest-order (a b)
+  "Return t if the darkness of A > B."
+  (let ((a (autothemer-color-brightness (autothemer--color-value a)))
+        (b (autothemer-color-brightness (autothemer--color-value b))))
+    (> b a)))
+
+(defun autothemer-lightest-order (a b)
+  "Return t if the lightness of A > B."
+  (let ((a (autothemer-color-brightness (autothemer--color-value a)))
+        (b (autothemer-color-brightness (autothemer--color-value b))))
+      (> a b)))
+
+(defun autothemer-saturated-order (a b)
+  "Return t if the saturation of A > B."
+  (let ((a (autothemer-color-sat (autothemer--color-value a)))
+        (b (autothemer-color-sat (autothemer--color-value b))))
+      (> a b)))
+
+(defun autothemer-hue-order (a b)
+  "Return t if the hue of A > B."
+  (let ((a (autothemer-color-hue (autothemer--color-value a)))
+        (b (autothemer-color-hue (autothemer--color-value b))))
+      (> a b)))
+
+(defun autothemer-hue-sat-order (a b)
+  "Return t if the hue and sat of A > B."
+  (let ((a-hue (autothemer-color-hue (autothemer--color-value a)))
+        (b-hue (autothemer-color-hue (autothemer--color-value b)))
+        (a-sat (autothemer-color-sat (autothemer--color-value a)))
+        (b-sat (autothemer-color-sat (autothemer--color-value b)))
+        (sort-hash-fmt "%016s-%016s"))
+    (string> (format sort-hash-fmt a-hue a-sat)
+             (format sort-hash-fmt b-hue b-sat))))
+
+(defun autothemer-sort-palette (theme-colors &optional fn)
+  "Produce a list of sorted THEME-COLORS using FN.
+
+If FN is nil, sort by default FN `autothemer-darkest-order'.
+
+`autothemer-lightest-order' is available to balance the force.
+
+There are also `autothemer-hue-order' and `autothemer-saturated-order'"
+  (let ((fn (or fn 'autothemer-darkest-order)))
+     (-sort fn theme-colors)))
+
 ;;; SVG Palette generator...
 
 (defun autothemer-generate-palette-svg (&optional options)
   "Create an SVG palette image for a theme.
 
-Optionally supply OPTIONS, a plist (all keys are optional):
+Optionally supply a plist of OPTIONS (all keys are optional, 
+required values will default or prompt interactively.):
 
     :theme-file - theme filename
     :theme-name - override the title found in :theme-file
@@ -392,14 +535,23 @@ Optionally supply OPTIONS, a plist (all keys are optional):
     :theme-url - override the url found in :theme-file
     :swatch-width - px spacing width of a color swatch (default: 100)
     :swatch-height - px spacing height of a color swatch (default: 150)
+    :swatch-rotate - degrees of rotation for swatch (default: 45)
     :columns - number of columns for each palette row (default: 6)
     :page-template - see page-template below
+    :page-top-margin - (default 120)
+    :page-right-margin - (default 30)
+    :page-bottom-margin - (default 60)
+    :page-left-margin - (default 30)
+    :h-space - (default 10)
+    :v-space - (default 10)
     :swatch-template - see swatch-template below
     :font-family - font name to use in the generated SVG
-    :bg-color - background color
-    :text-color - text color
-    :text-accent-color - text color
-    :svg-out-file - SVG output filename
+    :bg-color
+    :text-color
+    :text-accent-color
+    :swatch-border-color
+    :sort-palette
+    :svg-out-file
 
 For advanced customization the :page-template and :swatch-template can be
 used to provide customize the SVG templates.
@@ -423,15 +575,40 @@ Swatch Template parameters:
 
     %1$s - x
     %2$s - y
-    %3$s - swatch-color
-    %4$s - text-color
-    %5$s - swatch-color-name"
+    %3$s - swatch-border-color
+    %4$s - swatch-color
+    %5$s - text-accent-color
+    %6$s - swatch-color-name"
   (interactive)
   (autothemer--plist-bind
-    (theme-file theme-name theme-description theme-url
-     swatch-width swatch-height columns page-template
-     swatch-template font-family bg-color
-     text-color text-accent-color svg-out-file)
+    (theme-file
+     theme-name
+     theme-description
+     theme-url
+
+     sort-palette
+     swatch-width
+     swatch-height
+     swatch-rotate
+     columns
+
+     page-top-margin
+     page-right-margin
+     page-bottom-margin
+     page-left-margin
+
+     page-template
+     swatch-template
+
+     font-family
+
+     bg-color
+     text-color
+     text-accent-color
+     swatch-border-color
+     h-space
+     v-space
+     svg-out-file)
     options
    (let ((theme-file (or theme-file (read-file-name "Select autothemer theme .el file: "))))
      (load-file theme-file) ;; make it the current-theme
@@ -459,50 +636,54 @@ Swatch Template parameters:
                          |    </a>
                          |  </g>
                          |  <g transform=\"translate(70,-40)\">
-                         |  %10$s
+                         |    %10$s
                          |  </g>
                          |</svg>
                          |")))
 
             (swatch-template
              (or swatch-template
-              (autothemer--unindent "<g transform=\"translate(%1$s,%2$s),rotate(45)\">
+              (autothemer--unindent "<g transform=\"translate(%1$s,%2$s),rotate(%9$s)\">
                          | <ellipse cx=\"70\" cy=\"70\" rx=\"45\" ry=\"45\" id=\"background-color\" fill=\"%3$s\"/>
                          | <ellipse cx=\"70\" cy=\"70\" rx=\"42\" ry=\"42\" id=\"color\" fill=\"%4$s\"/>
                          | <text style=\"font-size:7pt\" font-weight=\"bold\" x=\"52\" y=\"125\" id=\"color-name\">%6$s</text>
                          | <text style=\"font-size:7pt; fill:%5$s;\" font-weight=\"bold\" x=\"52\" y=\"134\" id=\"color\">%4$s</text>
+                         | <!-- Rect below is for debug set stroke width to be visible -->
+                         |   <rect x=\"0\" y=\"0\" width=\"%7$spx\" height=\"%8$spx\" class=\"debug-rect\" fill-opacity=\"0.0\" stroke-width=\"0.0mm\" stroke=\"#FF8000\"/>
                          |</g>
                          |")))
 
             (autotheme-name (autothemer--theme-name autothemer--current-theme))
-            (theme-name (or theme-name
-                            (autothemer--theme-name autothemer--current-theme)))
-            (theme-description (or theme-description
-                                   (autothemer--theme-description autothemer--current-theme)))
-            (theme-url  (or theme-url
-                         (lm-homepage theme-file)
-                         (read-string "Enter theme URL: " "https://github.com/")))
             (colors (autothemer--theme-colors autothemer--current-theme))
-            (font-family  (or font-family
-                           (read-string "Font family name: " "Helvetica Neue")))
-            (swatch-width (or swatch-width
-                              100))
-            (swatch-height (or swatch-height
-                               150))
-            (columns (or columns
-                         6))
-            ;; TODO: Width and Height padding (55, 120) parameterized?
-            (width (+ 55 (* columns swatch-width)))
-            (height (+ 120 (* (/ (length colors) columns) swatch-height)))
-            (background-color (or bg-color
-                                  (autothemer--color-value
-                                   (autothemer--select-color "Select Background color: "))))
-            (text-color (or text-color
-                            (autothemer--color-value
-                             (autothemer--select-color "Select Text color: "))))
-            (text-accent-color (or text-accent-color
-                                   (autothemer--color-value
-                                    (autothemer--select-color "Select Text accent color: "))))
+            (theme-name        (or theme-name (autothemer--theme-name autothemer--current-theme)))
+            (theme-description (or theme-description (autothemer--theme-description autothemer--current-theme)))
+            (theme-url         (or theme-url (lm-homepage theme-file) (read-string "Enter theme URL: " "https://github.com/")))
+
+            (font-family        (or font-family        (read-string "Font family name: " "Helvetica Neue")))
+            (swatch-width       (or swatch-width       (read-number "Swatch width: " 100)))
+            (swatch-height      (or swatch-height      (read-number "Swatch height: " 150)))
+            (swatch-rotate      (or swatch-rotate      (read-number "Swatch rotate: " 45)))
+            (columns            (or columns            (read-number "Number or columns: " 6)))
+            (page-top-margin    (or page-top-margin    (read-number "Page Top margin: " 120)))
+            (page-bottom-margin (or page-bottom-margin (read-number "Page Bottom margin: " 60)))
+            (page-left-margin   (or page-left-margin   (read-number "Page Left margin: " 30)))
+            (page-right-margin  (or page-right-margin  (read-number "Page Right margin: " 30)))
+            (h-space            (or h-space            (read-number "Swatch horiztonal spacing: " 10)))
+            (v-space            (or v-space            (read-number "Swatch vertical spacing: " 10)))
+
+            (rows (/ (length colors) columns))
+            (width (+ page-right-margin page-left-margin
+                      (* h-space columns)
+                      (* swatch-width columns)))
+            (height (+ page-top-margin page-bottom-margin
+                       (* v-space rows)
+                       (* swatch-height (+ 1 rows))))
+
+            (background-color    (or bg-color            (autothemer--color-value (autothemer--select-color "Select Background color: "))))
+            (text-color          (or text-color          (autothemer--color-value (autothemer--select-color "Select Text color: "))))
+            (text-accent-color   (or text-accent-color   (autothemer--color-value (autothemer--select-color "Select Text accent color: "))))
+            (swatch-border-color (or swatch-border-color (autothemer--color-value (autothemer--select-color "Select swatch border color: "))))
+
             (svg-out-file (or svg-out-file (read-file-name (format "Enter a Filename to save SVG palette for %s." theme-name))))
             (svg-swatches (string-join
                             (-map-indexed
@@ -512,16 +693,20 @@ Swatch Template parameters:
                                                  (replace-regexp-in-string
                                                   (concat autotheme-name "-") ""
                                                   (format "%s" (autothemer--color-name it)))))
-                                         (x (+ 20 (* swatch-width (% index columns))))
-                                         (y (+ 90 (* swatch-height (/ index columns)))))
+                                         (x (+ page-left-margin (* (+ h-space swatch-width) (% index columns))))
+                                         (y (+ page-top-margin (* (+ v-space swatch-height) (/ index columns)))))
                                      (format swatch-template
                                              x
                                              y
-                                             background-color
+                                             swatch-border-color
                                              color
                                              text-accent-color
-                                             name)))
-                             colors)
+                                             name swatch-width swatch-height swatch-rotate)))
+                             (if sort-palette
+                                 (if (eql t sort-palette)
+                                     (autothemer-sort-palette colors)
+                                   (autothemer-sort-palette colors (intern sort-palette)))
+                                 colors))
                             "\n")))
        (with-temp-file svg-out-file
          (insert
