@@ -2,6 +2,8 @@ name: Autothemer Tests
 
 on:
   push:
+    branches: 
+      - master
   pull_request:
 
 jobs:
