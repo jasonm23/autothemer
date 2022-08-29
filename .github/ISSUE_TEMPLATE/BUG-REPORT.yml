@@ -30,7 +30,7 @@ body:
     id: screenshot
     attributes:
       label: "Screenshots"
-      description: If applicable, add screenshots to help explain your problem. (link to or drag and drop an image.)
+      description: If applicable, add screenshots to help explain your problem. (link to an image.)
       value: |
         ![DESCRIPTION](LINK.png)
       render: bash
