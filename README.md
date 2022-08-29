@@ -489,20 +489,23 @@ Once this is done you test your theme.
 (I use `disable-theme` and `enable-theme` to test/use themes under development.  
 Make sure you eval all the theme's elisp files before enabling the theme.)
 
-
-
 ### Themes using Autothemer
 
-- [Gruvbox](https://github.com/greduan/emacs-theme-gruvbox)
-- [Darktooth](https://github.com/emacsfodder/emacs-theme-darktooth)
-- [Creamsody](https://github.com/emacsfodder/emacs-theme-creamsody)
-- [Sakura](https://github.com/emacsfodder/emacs-theme-sakura)
-- [Cyanometric](https://github.com/emacsfodder/emacs-theme-cyanometric)
-- [Orangey Bits](https://github.com/emacsfodder/emacs-theme-orangey-bits)
-- [Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
+- [greduan/Gruvbox](https://github.com/greduan/emacs-theme-gruvbox)
+- [thongpv87/Rose Pine](https://github.com/thongpv87/rose-pine-emacs)
+- [ogdenwebb/Kaolin](https://github.com/ogdenwebb/emacs-kaolin-themes)
+- [mtreca/Sorcery](https://github.com/mtreca/emacs-theme-sorcery)
+- [ajgrf/Parchment](https://github.com/ajgrf/parchment/)
+- [emacsfodder/Darktooth](https://github.com/emacsfodder/emacs-theme-darktooth)
+- [emacsfodder/Soothe](https://github.com/emacsfodder/emacs-soothe-theme)
+- [emacsfodder/Creamsody](https://github.com/emacsfodder/emacs-theme-creamsody)
+- [emacsfodder/Sakura](https://github.com/emacsfodder/emacs-theme-sakura)
+- [emacsfodder/Orangey Bits](https://github.com/emacsfodder/emacs-theme-orangey-bits)
+- [emacsfodder/Cyanometric](https://github.com/emacsfodder/emacs-theme-cyanometric)
+- [emacsfodder/Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
 
 If you are creating themes with Autothemer, please let us know, you can add the theme info to 
-README and open a  pull request.
+README and open a pull request.
 
 ### Contributing
 
