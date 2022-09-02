@@ -56,56 +56,56 @@
         ,example-orange
         ,example-cyan])))
 
-;;; autothemer--current-theme is set.
+;;; autothemer-current-theme is set.
 
   (ert-deftest current-theme ()
     "Test current theme is available."
     (should (not (null
-                  autothemer--current-theme))))
+                  autothemer-current-theme))))
 
   (ert-deftest theme-has-colors ()
     "Check theme has colors."
     (should (eql 7 (length (autothemer--theme-colors
-                            autothemer--current-theme)))))
+                            autothemer-current-theme)))))
 
   (ert-deftest theme-has-face-specs ()
     "Check theme has face specs."
     (should (eql 2 (length (autothemer--theme-defined-faces
-                            autothemer--current-theme)))))
+                            autothemer-current-theme)))))
 
   (ert-deftest color-value ()
     "Check color value."
     (should (string= "#781210"
                      (autothemer--color-value
                       (car (autothemer--theme-colors
-                            autothemer--current-theme))))))
+                            autothemer-current-theme))))))
 
   (ert-deftest color-name ()
     "Check color name."
     (should (string= "example-red"
                      (autothemer--color-name
                       (car (autothemer--theme-colors
-                            autothemer--current-theme))))))
+                            autothemer-current-theme))))))
 
   (ert-deftest spec-name ()
     "Check spec name."
     (should (equal 'button
                       (car (autothemer--theme-defined-faces
-                                  autothemer--current-theme)))))
+                                  autothemer-current-theme)))))
 
   (ert-deftest theme-has-description ()
     "Check theme description."
     (should (string=
              "Autothemer example..."
              (autothemer--theme-description
-              autothemer--current-theme))))
+              autothemer-current-theme))))
 
   (ert-deftest theme-has-name ()
     "Check theme name."
     (should (string=
              "theme-example"
              (autothemer--theme-name
-              autothemer--current-theme))))
+              autothemer-current-theme))))
 
 ;;; Let palette
 
@@ -190,7 +190,7 @@
 
 ;;; Colorization
 
-  (ert-deftest autothemer-colorize-alist ()
+  (ert-deftest autothemer--colorize-alist ()
     "Check autothemer-colorize-alist."
     (should (equal '(("example-red" . "#781210")
                      ("example-green" . "#22881F")
@@ -199,51 +199,51 @@
                      ("example-yellow" . "#EFFE00")
                      ("example-orange" . "#E06500")
                      ("example-cyan" . "#22DDFF"))
-                   (autothemer-colorize-alist))))
+                   (autothemer--colorize-alist))))
 
 ;;; Color/Palette grouping & sorting
 
   (ert-deftest autothemer-color-hue-group ()
     "Test autothemer-color-hue-group."
-    (should (equal (autothemer--hue-group "#FF0005") 'red))
-    (should (equal (autothemer--hue-group "#00FF00") 'green))
-    (should (equal (autothemer--hue-group "#FF00FF") 'magenta))
-    (should (equal (autothemer--hue-group "#00FFFF") 'cyan))
-    (should (equal (autothemer--hue-group "#0000FF") 'blue-magenta))
-    (should (equal (autothemer--hue-group "#FFFF00") 'yellow-green))
-    (should (equal (autothemer--hue-group "#FFFF00" autothemer--hue-groups) 'yellow-green))
-    (should (equal (autothemer--hue-group "#FFFF00" autothemer--simple-hue-groups) 'green)))
+    (should (equal (autothemer-hue-group "#FF0005") 'red))
+    (should (equal (autothemer-hue-group "#00FF00") 'green))
+    (should (equal (autothemer-hue-group "#FF00FF") 'magenta))
+    (should (equal (autothemer-hue-group "#00FFFF") 'cyan))
+    (should (equal (autothemer-hue-group "#0000FF") 'blue-magenta))
+    (should (equal (autothemer-hue-group "#FFFF00") 'yellow-green))
+    (should (equal (autothemer-hue-group "#FFFF00" autothemer-hue-groups) 'yellow-green))
+    (should (equal (autothemer-hue-group "#FFFF00" autothemer-simple-hue-groups) 'green)))
 
   (ert-deftest autothemer-brightness-group ()
     "Test autothemer-brightness-group."
-    (should (equal (autothemer--brightness-group "#FF0005") 'brightness-080-100-percent))
-    (should (equal (autothemer--brightness-group "#007700") 'brightness-040-060-percent))
-    (should (equal (autothemer--brightness-group "#FF55FF") 'brightness-080-100-percent))
-    (should (equal (autothemer--brightness-group "#004444") 'brightness-020-040-percent))
-    (should (equal (autothemer--brightness-group "#020202") 'brightness-000-020-percent))
-    (should (equal (autothemer--brightness-group
+    (should (equal (autothemer-brightness-group "#FF0005") 'brightness-080-100-percent))
+    (should (equal (autothemer-brightness-group "#007700") 'brightness-040-060-percent))
+    (should (equal (autothemer-brightness-group "#FF55FF") 'brightness-080-100-percent))
+    (should (equal (autothemer-brightness-group "#004444") 'brightness-020-040-percent))
+    (should (equal (autothemer-brightness-group "#020202") 'brightness-000-020-percent))
+    (should (equal (autothemer-brightness-group
                     "#020202"
-                    autothemer--dark-mid-light-brightness-groups)
+                    autothemer-dark-mid-light-brightness-groups)
                    'dark))
-    (should (equal (autothemer--brightness-group
+    (should (equal (autothemer-brightness-group
                     "#777777"
-                    autothemer--dark-mid-light-brightness-groups)
+                    autothemer-dark-mid-light-brightness-groups)
                    'mid)))
 
   (ert-deftest autothemer-saturation-group ()
     "Test autothemer-saturation-group."
-    (should (equal (autothemer--saturation-group "#FF0005") 'saturation-080-100-percent))
-    (should (equal (autothemer--saturation-group "#007700") 'saturation-080-100-percent))
-    (should (equal (autothemer--saturation-group "#FF55FF") 'saturation-060-080-percent))
-    (should (equal (autothemer--saturation-group "#004444") 'saturation-080-100-percent))
-    (should (equal (autothemer--saturation-group "#020202") 'saturation-000-020-percent))
-    (should (equal (autothemer--saturation-group
+    (should (equal (autothemer-saturation-group "#FF0005") 'saturation-080-100-percent))
+    (should (equal (autothemer-saturation-group "#007700") 'saturation-080-100-percent))
+    (should (equal (autothemer-saturation-group "#FF55FF") 'saturation-060-080-percent))
+    (should (equal (autothemer-saturation-group "#004444") 'saturation-080-100-percent))
+    (should (equal (autothemer-saturation-group "#020202") 'saturation-000-020-percent))
+    (should (equal (autothemer-saturation-group
                     "#020202"
-                    autothemer--low-mid-high-saturation-groups)
+                    autothemer-low-mid-high-saturation-groups)
                    'low))
-    (should (equal (autothemer--saturation-group
+    (should (equal (autothemer-saturation-group
                     "#336677"
-                    autothemer--low-mid-high-saturation-groups)
+                    autothemer-low-mid-high-saturation-groups)
                    'mid)))
 
   (ert-deftest autothemer-group-colors ()
@@ -258,8 +258,8 @@
                   (make-autothemer--color :name 'example-color-006 :value "#FFEECC")
                   (make-autothemer--color :name 'example-color-007 :value "#281993")
                   (make-autothemer--color :name 'example-color-010 :value "#240933"))
-                 (list :group-fn 'autothemer--saturation-group
-                       :group-args autothemer--low-mid-high-saturation-groups))
+                 (list :group-fn 'autothemer-saturation-group
+                       :group-args autothemer-low-mid-high-saturation-groups))
                 '((high #s(autothemer--color example-color-005 "#112063")
                         #s(autothemer--color example-color-007 "#281993")
                         #s(autothemer--color example-color-010 "#240933"))
@@ -309,8 +309,8 @@
                         (example-color-034 . "#D82662")
                         (example-color-035 . "#B11D37")
                         (example-color-036 . "#E52929")))
-                    '(:group-fn autothemer--hue-group
-                      :group-args autothemer--simple-hue-groups
+                    '(:group-fn autothemer-hue-group
+                      :group-args autothemer-simple-hue-groups
                       :sort-fn autothemer-darkest-order))
 
                    '((red #s(autothemer--color example-color-005 "#181818")

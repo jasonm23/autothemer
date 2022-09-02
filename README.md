@@ -9,7 +9,9 @@
 Autothemer provides `autothemer-deftheme` a macro wrapper for `deftheme` and
 `custom-theme-set-faces` which creates a custom color theme.
 
-The package also includes some useful theme development features... read on.
+The package also includes useful theme development features see below.
+
+---
 
 ## News
 
@@ -393,6 +395,7 @@ I'll add some more palette SVG templates in the Wiki, link to any more you creat
 
 [Wiki page here](/jasonm23/autothemer/wiki/Palette-SVG-Templates)
 
+### [Complete Command/Function Reference](function-reference.md)
 
 # TVA
 
