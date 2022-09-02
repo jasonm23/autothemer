@@ -7,7 +7,7 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.10
+;; Version: 0.2.11
 ;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
 ;;
 ;;; License:
@@ -25,11 +25,26 @@
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; Reduces the amount of boilerplate code needed to define custom themes. Also
-;; provides the user with an interactive command that automatically generates
-;; face customization code using the theme's color palette.
-
+;;
+;; Reduce the amount of pain and boilerplate code needed to create custom themes using `autothemer-deftheme'.
+;;
+;; Autothemer also includes interactive commands and functions to
+;; assist with theme building, here are a few highlights...
+;;
+;; - Generate specs for unthemed faces using the theme color palette.
+;;   - `autothemer-generate-templates'
+;;   - `autothemer-generate-templates-filtered' (filter by regexp)
+;; - Generate a palette SVG image
+;;   - `autothemer-generate-palette-svg'
+;; - Insert a color name or color from the active palette
+;;   - `autothemer-insert-color-name'
+;;   - `autothemer-insert-color'
+;; - Colorize/font-lock palette color names in the buffer
+;;   - `autothemer-colorize'  (requires `rainbow-mode' during development.)
+;;
+;;
+;; Note in the function reference, the fucntion prefix `autothemer--' indicates internal
+;; functions.
 ;;; Code:
 (require 'cl-lib)
 (require 'dash)
@@ -48,17 +63,102 @@
   name
   description)
 
-(defvar autothemer--current-theme nil
+(defvar autothemer-current-theme nil
   "Internal variable of type `autothemer--theme' used by autothemer.
 Contains the color palette and the list of faces most recently
 customized using `autothemer-deftheme'.")
 
+(defvar autothemer-hue-groups
+  '((red             (345 . 10))
+    (red-orange      (10  . 20))
+    (orange-brown    (20  . 40))
+    (orange-yellow   (40  . 50))
+    (yellow          (50  . 60))
+    (yellow-green    (60  . 80))
+    (green           (80  . 140))
+    (green-cyan      (140 . 170))
+    (cyan            (170 . 200))
+    (cyan-blue       (200 . 220))
+    (blue            (220 . 240))
+    (blue-magenta    (240 . 280))
+    (magenta         (280 . 320))
+    (magenta-pink    (320 . 330))
+    (pink            (330 . 345)))
+  "Set of perceptual color ranges.")
+
+(defvar autothemer-simple-hue-groups
+  '((red     (345 . 20))
+    (orange  (20  . 50))
+    (yellow  (50  . 60))
+    (green   (60  . 140))
+    (cyan    (140 . 220))
+    (blue    (220 . 280))
+    (magenta (280 . 345)))
+  "Simple set of color groups.")
+
+(defvar autothemer-low-mid-high-saturation-groups
+  '((low (0.0 . 0.3333333333333333))
+    (mid (0.3333333333333334 . 0.6666666666666666))
+    (high (0.6666666666666667 . 1.0)))
+  "Low, mid & high saturation groups.")
+
+(defvar autothemer-20-percent-saturation-groups
+  '((saturation-000-020-percent (0.0 . 0.2))
+    (saturation-020-040-percent (0.2 . 0.4))
+    (saturation-040-060-percent (0.4 . 0.6))
+    (saturation-060-080-percent (0.6 . 0.8))
+    (saturation-080-100-percent (0.8 . 1.0)))
+  "Saturation grouping at 20% intervals.
+This is the default for `autothemer-saturation-group'.")
+
+(defvar autothemer-10-percent-saturation-groups
+  '((saturation-000-010-percent (0.0 . 0.1))
+    (saturation-010-020-percent (0.1 . 0.2))
+    (saturation-020-030-percent (0.2 . 0.3))
+    (saturation-030-040-percent (0.3 . 0.4))
+    (saturation-040-050-percent (0.4 . 0.5))
+    (saturation-050-060-percent (0.5 . 0.6))
+    (saturation-060-070-percent (0.6 . 0.7))
+    (saturation-070-080-percent (0.7 . 0.8))
+    (saturation-080-090-percent (0.8 . 0.9))
+    (saturation-090-100-percent (0.9 . 1.0)))
+  "Saturation grouping at 10% intervals.")
+
+(defvar autothemer-dark-mid-light-brightness-groups
+ '((dark (0.0 . 0.3333333333333333))
+   (mid (0.3333333333333334 . 0.6666666666666666))
+   (light (0.6666666666666667 . 1.0)))
+ "Dark, mid & light brightness groups.")
+
+(defvar autothemer-20-percent-brightness-groups
+  '((brightness-000-020-percent (0.0 . 0.2))
+    (brightness-020-040-percent (0.2 . 0.4))
+    (brightness-040-060-percent (0.4 . 0.6))
+    (brightness-060-080-percent (0.6 . 0.8))
+    (brightness-080-100-percent (0.8 . 1.0)))
+  "Brightness groups at 20% intervals.
+This is the default `autothemer-brightness-group'.")
+
+(defvar autothemer-10-percent-brightness-groups
+  '((brightness-000-010-percent (0.0 . 0.1))
+    (brightness-010-020-percent (0.1 . 0.2))
+    (brightness-020-030-percent (0.2 . 0.3))
+    (brightness-030-040-percent (0.3 . 0.4))
+    (brightness-040-050-percent (0.4 . 0.5))
+    (brightness-050-060-percent (0.5 . 0.6))
+    (brightness-060-070-percent (0.6 . 0.7))
+    (brightness-070-080-percent (0.7 . 0.8))
+    (brightness-080-090-percent (0.8 . 0.9))
+    (brightness-090-100-percent (0.9 . 1.0)))
+  "Brightness grouping at 10% intervals.")
+
 (defun autothemer--reduced-spec-to-facespec (display reduced-specs)
   "Create a face spec for DISPLAY, with specs REDUCED-SPECS.
-E.g., (autothemer--reduced-spec-to-facespec '(min-colors 60)
-'(button (:underline t :foreground red)))
--> `(button (((min-colors 60) (:underline ,t :foreground
-,red))))."
+
+For example:
+
+     (autothemer--reduced-spec-to-facespec '(min-colors 60) '(button (:underline t :foreground red)))
+     ;; => `(button (((min-colors 60) (:underline ,t :foreground ,red))))."
   (let* ((face (elt reduced-specs 0))
          (properties (elt reduced-specs 1))
          (spec (autothemer--demote-heads `(list (,display ,properties)))))
@@ -77,7 +177,7 @@ E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g))."
 ;;;###autoload
 (defmacro autothemer-deftheme (name description palette reduced-specs &rest body)
   "Define a theme NAME with description DESCRIPTION.
-A color PALETTE can be used to define let*-like
+A color PALETTE can be used to define `let*'-like
 bindings within both the REDUCED-SPECS and the BODY."
   (let* ((face-names (-map #'car reduced-specs))
          (color-names (-map #'car (-drop 1 palette)))
@@ -112,7 +212,7 @@ bindings within both the REDUCED-SPECS and the BODY."
                                                 in ,temp-defined-colors
                                                 collect (make-autothemer--color :name ,temp-colorname
                                                                                 :value ,temp-color)))
-                                 (setq autothemer--current-theme
+                                 (setq autothemer-current-theme
                                        (make-autothemer--theme
                                         :name ,(symbol-name name)
                                         :description ,description
@@ -161,7 +261,7 @@ Iterate through all currently defined faces and return those that
 were left uncustomized by the most recent call to
 `autothemer-deftheme'."
   (let ((all-faces (face-list))
-        (themed-faces (autothemer--theme-defined-faces autothemer--current-theme)))
+        (themed-faces (autothemer--theme-defined-faces autothemer-current-theme)))
     (--filter (not (-contains? themed-faces it)) all-faces)))
 
 (defun autothemer--face-to-alist (face)
@@ -188,7 +288,7 @@ were left uncustomized by the most recent call to
   "Replace colors in REDUCED-SPEC by their closest approximations in THEME.
 Replace every expression in REDUCED-SPEC that passes
 `color-defined-p' by the closest approximation found in
-`autothemer--current-theme'.  Also quote all face names and
+`autothemer-current-theme'.  Also quote all face names and
 unbound symbols, such as `normal' or `demibold'."
   (let ((colors (autothemer--theme-colors theme))
         (face (car reduced-spec))
@@ -270,12 +370,12 @@ Calls `autothemer-generate-templates' after user provides REGEXP interactively."
   "Autogenerate customizations for unthemed faces (optionally by REGEXP).
 
 Generate customizations that approximate current face definitions using the
-nearest colors in the color palette of `autothemer--current-theme'.
+nearest colors in the color palette of `autothemer-current-theme'.
 
 An error is shown when no current theme is available."
   (interactive)
-  (unless autothemer--current-theme
-    (user-error "No autothemer--current-theme available. Please evaluate an autothemer-deftheme"))
+  (unless autothemer-current-theme
+    (user-error "No autothemer-current-theme available. Please evaluate an autothemer-deftheme"))
   (let* ((missing-faces
           (if (null regexp)
               (autothemer--unthemed-faces)
@@ -288,7 +388,7 @@ An error is shown when no current theme is available."
            (--map (autothemer--approximate-spec
                    (autothemer--alist-to-reduced-spec
                     it (autothemer--face-to-alist it))
-                   autothemer--current-theme)
+                   autothemer-current-theme)
                   missing-faces))
          (buffer
           (get-buffer-create
@@ -305,7 +405,7 @@ Otherwise, append NEW-COLUMN to every element of LISTS."
 
 (defun autothemer--current-theme-guard ()
   "Guard functions from executing when there's no current theme."
-  (unless autothemer--current-theme
+  (unless autothemer-current-theme
     (user-error "No current theme available. Evaluate an autotheme definition")))
 
 ;;; Get colors from theme palette
@@ -313,7 +413,7 @@ Otherwise, append NEW-COLUMN to every element of LISTS."
 (defun autothemer--get-color (color-name)
   "Return color palette object for (string) COLOR-NAME.
 
-Search the `autothemer--current-theme' color palette for COLOR-NAME
+Search the `autothemer-current-theme' color palette for COLOR-NAME
 and returns a color in the form of `autothemer--color' struct.
 
 See also `autothemer--color-p',
@@ -323,11 +423,11 @@ See also `autothemer--color-p',
   (--find
    (eql (intern color-name)
         (autothemer--color-name it))
-   (autothemer--theme-colors autothemer--current-theme)))
+   (autothemer--theme-colors autothemer-current-theme)))
 
 (defun autothemer--select-color (&optional prompt)
   "Select a color from the current palette, optionally use PROMPT.
-Current palette is read from `autothemer--current-theme'.
+Current palette is read from `autothemer-current-theme'.
 
 The selected color will be in the form of a `autothemer--color'
 
@@ -352,7 +452,7 @@ See also `autothemer--color-p',
                         'face (list ':background color
                                     ':foreground (readable-foreground-color color)))
                        name)))
-          (autothemer--theme-colors autothemer--current-theme))))
+          (autothemer--theme-colors autothemer-current-theme))))
        (color-name (cadr (split-string selected " " t " "))))
     (autothemer--get-color color-name)))
 
@@ -393,28 +493,28 @@ If PLIST is nil, ARGS are bound to BODY nil values."
 
 ;;; let palette...
 (defmacro autothemer-let-palette (&rest body)
-  "Provide a let block for BODY from `autothemer--current-theme'.
+  "Provide a let block for BODY from `autothemer-current-theme'.
 
 Load/eval the required autothemer theme source (not
-byte-compiled) to set `autothemer--current-theme'."
+byte-compiled) to set `autothemer-current-theme'."
   (autothemer--current-theme-guard)
   `(let ,(--map (list (autothemer--color-name it) (autothemer--color-value it))
-                (autothemer--theme-colors autothemer--current-theme))
+                (autothemer--theme-colors autothemer-current-theme))
      ,@body))
 
 ;;; Colorize alist for rainbow-mode
-(defun autothemer-colorize-alist ()
+(defun autothemer--colorize-alist ()
   "Generate an alist for use with rainbow-mode.
 
 To colorize use:
 
-    (rainbow-colorize-by-assoc (autothemer-colorize-alist))
+    (rainbow-colorize-by-assoc (autothemer--colorize-alist))
 
-Colors are from `autothemer--current-theme'."
+Colors are from `autothemer-current-theme'."
   (autothemer--current-theme-guard)
   (--map (cons (format "%s" (autothemer--color-name it))
                (autothemer--color-value it))
-    (autothemer--theme-colors autothemer--current-theme)))
+    (autothemer--theme-colors autothemer-current-theme)))
 
 (defvar autothemer--colors-font-lock-keywords nil)
 
@@ -422,8 +522,8 @@ Colors are from `autothemer--current-theme'."
   "Colorize using rainbow-mode."
   (interactive)
   (setq autothemer--colors-font-lock-keywords
-      `((,(regexp-opt (mapcar 'car (autothemer-colorize-alist)) 'words)
-         (0 (rainbow-colorize-by-assoc (autothemer-colorize-alist))))))
+      `((,(regexp-opt (mapcar 'car (autothemer--colorize-alist)) 'words)
+         (0 (rainbow-colorize-by-assoc (autothemer--colorize-alist))))))
   (font-lock-add-keywords nil autothemer--colors-font-lock-keywords t))
 
 (defun autothemer--color-to-hsv (rgb)
@@ -432,7 +532,7 @@ The `r' `g' `b' values can range between `0..65535'.
 
 In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
   (cl-destructuring-bind
-      (r g b) rgb
+      (r g b) (--map (/ it 65535.0) rgb)
     (let*
         ((bri (max r g b))
          (delta (- bri (min r g b)))
@@ -455,8 +555,7 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
             bri))))
 
 (defun autothemer-hex-to-rgb (hex)
-  "Fast convert HEX to `(r g b)'.
-(Perf equal to wx color values C function.)
+  "Convert HEX to `(r g b)'.
 `r', `g', `b' will be values `0..65535'"
   (let ((rgb (string-to-number (substring hex 1) 16)))
     (list
@@ -475,6 +574,8 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
 (defun autothemer-color-brightness (hex-color)
   "Return the HSV brightness of HEX-COLOR."
   (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+
+;;; Sort/Order of autothemer--color structs.
 
 (defun autothemer-darkest-order (a b)
   "Return t if the darkness of A > B."
@@ -521,12 +622,191 @@ There are also `autothemer-hue-order' and `autothemer-saturated-order'"
   (let ((fn (or fn 'autothemer-darkest-order)))
      (-sort fn theme-colors)))
 
+;; Color Grouping
+
+(defun autothemer-color-to-group (color fn groups)
+  "Group COLOR using FN, in GROUPS."
+  (let ((value (funcall fn color)))
+   (-reduce-from
+    (lambda (acc range)
+      (let ((a (car (cadr range)))
+            (b (cdr (cadr range))))
+       (if (<= a value b)
+         (car range)
+        acc)))
+    nil
+    groups)))
+
+(defun autothemer-saturation-group (color &optional saturation-groups)
+  "Return the saturation group of COLOR.
+Functionally identical to `autothemer-hue-groups' for saturation.
+Optionally provide a list of SATURATION-GROUPS.
+The default is `autothemer-20-percent-saturation-groups'."
+  (autothemer-color-to-group
+   color
+   'autothemer-color-sat
+   (or saturation-groups autothemer-20-percent-saturation-groups)))
+
+(defun autothemer-brightness-group (color &optional brightness-groups)
+  "Return the brightness group of COLOR.
+Functionally identical to `autothemer-hue-groups' for brightness.
+Optionally provide a list of BRIGHTNESS-GROUPS.
+The default is `autothemer-20-percent-brightness-groups'."
+  (autothemer-color-to-group
+   color
+   'autothemer-color-brightness
+   (or brightness-groups autothemer-20-percent-brightness-groups)))
+
+(defun autothemer-hue-group (color &optional hue-groups)
+  "Return the color hue group for COLOR.
+
+Optionally provide a list of HUE-GROUPS.
+\(default uses `autothemer-hue-groups'.)
+Also available is `autothemer-simple-hue-groups',
+both are customizable, or define your own.
+
+This facilitates hue grouping & sorting by a secondary axis.
+For example sort a list of colors by some axis (brightness or
+saturation). Then group by hue groups, and sort the groups.
+The format of each group in the list is:
+
+    (group-name (n1 . n2))
+
+Where `group-name' is a symbol to name the group,
+`(n1 . n2)' is a hue range specifier (in degrees)
+low `n1' to high `n2'.
+
+A hue range which crosses the apex (i.e. `360°..0°') is permitted."
+  (let* ((init-hue-groups (or (and (listp hue-groups) hue-groups)
+                              (and (listp (symbol-value hue-groups))
+                                   (symbol-value hue-groups))
+                              autothemer-hue-groups))
+         (hue-groups (-reduce-from
+                      (lambda (acc range)
+                        (let* ((a (car (cadr range)))
+                               (b (cdr (cadr range)))
+                               (r (if (> a b) ;; hue apex check 360..0
+                                      `(,(list (car range) (cons a 360))
+                                        ,(list (car range) (cons 0 b)))
+                                    `(,range))))
+                          (if acc
+                              (cl-concatenate 'list acc r)
+                            r)))
+                      nil
+                      init-hue-groups))
+         (hue (autothemer-color-hue color)))
+   (-reduce-from
+    (lambda (acc range)
+      (let ((a (car (cadr range)))
+            (b (cdr (cadr range))))
+       (if (<= a (* hue 360) b)
+         (car range)
+        acc)))
+    nil
+    hue-groups)))
+
+;;; Group and sort
+
+(defun autothemer-group-sort (groups sort-fn)
+  "Sort GROUPS of colors using SORT-FN.
+GROUPS are produced by `autothemer-group-colors'."
+  (mapcar
+    (lambda (group)
+      "Groups are alists with car as key, cdr as colors."
+      (let* ((name (car group))
+             (colors (cdr group))
+             (sorted-colors (--sort
+                             (funcall sort-fn it other)
+                             colors)))
+        (cons name sorted-colors)))
+    groups))
+
+(defun autothemer-group-colors (palette options)
+  "Group PALETTE colors into groups as defined in plist OPTIONS:
+`:group-fn' - mandatory group function
+`:group-args' - args for `group-fn'"
+  (autothemer--plist-bind (group-fn group-args) options
+   (let* ((colors-with-groups (mapcar (lambda (color)
+                                        (list (funcall group-fn (autothemer--color-value color)
+                                                       group-args)
+                                              color))
+                                palette))
+          (grouped-colors (mapcar (lambda (group) (--reduce (-flatten (cons acc (cdr it))) group))
+                                  (--group-by (car it) colors-with-groups))))
+        grouped-colors)))
+
+(defun autothemer-group-and-sort (palette options)
+  "Group and sort PALETTE using OPTIONS.
+
+Options is a plist of:
+
+    :group-fn - mandatory group function
+    :group-args - optional group args (to use a non-default group)
+    :sort-fn - optional sort function
+
+See color grouping functions and group lists:
+
+Hue grouping:
+
+    autothemer-hue-group
+
+Builtin hue groups:
+
+    autothemer-hue-groups
+    autothemer-simple-hue-groups
+
+Brightness grouping:
+
+    autothemer-brightness-group
+
+Builtin brightness groups:
+
+    autothemer-dark-mid-light-brightness-groups
+    autothemer-10-percent-brightness-groups
+    autothemer-20-percent-brightness-groups
+
+Saturation grouping:
+
+    autothemer-saturation-group
+
+Builtin saturation groups:
+
+    autothemer-low-mid-high-saturation-groups
+    autothemer-10-percent-saturation-groups
+    autothemer-20-percent-saturation-groups
+
+- - -
+
+Sorting:
+
+The sort/ordering functions take args A and B, which are expected
+to be `autothemer--color' structs.
+
+Darkest to lightest:      `(autothemer-darkest-order a b)'
+Lightest to darkest:      `(autothemer-lightest-order a b)'
+Hue:                      `(autothemer-hue-order a b)'
+Saturated to desaturated: `(autothemer-saturated-order a b)'
+Desaturated to saturated: `(autothemer-desaturated-order a b)'"
+ (autothemer--plist-bind
+  (group-fn
+   group-args
+   sort-fn)
+  options
+  (let* ((grouped-colors (autothemer-group-colors
+                          palette
+                          `(:group-fn ,group-fn
+                            :group-args ,group-args)))
+         (sorted-groups  (autothemer-group-sort
+                          grouped-colors
+                          sort-fn)))
+      sorted-groups)))
+
 ;;; SVG Palette generator...
 
 (defun autothemer-generate-palette-svg (&optional options)
   "Create an SVG palette image for a theme.
 
-Optionally supply a plist of OPTIONS (all keys are optional, 
+Optionally supply OPTIONS (a plist, all keys are optional,
 required values will default or prompt interactively.):
 
     :theme-file - theme filename
@@ -653,10 +933,10 @@ Swatch Template parameters:
                          |</g>
                          |")))
 
-            (autotheme-name (autothemer--theme-name autothemer--current-theme))
-            (colors (autothemer--theme-colors autothemer--current-theme))
-            (theme-name        (or theme-name (autothemer--theme-name autothemer--current-theme)))
-            (theme-description (or theme-description (autothemer--theme-description autothemer--current-theme)))
+            (autotheme-name (autothemer--theme-name autothemer-current-theme))
+            (colors (autothemer--theme-colors autothemer-current-theme))
+            (theme-name        (or theme-name (autothemer--theme-name autothemer-current-theme)))
+            (theme-description (or theme-description (autothemer--theme-description autothemer-current-theme)))
             (theme-url         (or theme-url (lm-homepage theme-file) (read-string "Enter theme URL: " "https://github.com/")))
 
             (font-family        (or font-family        (read-string "Font family name: " "Helvetica Neue")))
