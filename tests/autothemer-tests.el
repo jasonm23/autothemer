@@ -249,7 +249,7 @@
   (ert-deftest autothemer-group-colors ()
     "Group colors into a plist of color lists, with group names as keys."
     (should (equal
-                (autothemer--group-colors
+                (autothemer-group-colors
                  (list
                   (make-autothemer--color :name 'example-color-005 :value "#112063")
                   (make-autothemer--color :name 'example-color-006 :value "#88DDCC")
