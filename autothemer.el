@@ -743,41 +743,54 @@ GROUPS are produced by `autothemer-group-colors'."
 
 Options is a plist of:
 
+#TABLE Option - Description #
     :group-fn - mandatory group function
     :group-args - optional group args (to use a non-default group)
     :sort-fn - optional sort function
+#TABLE#
 
 See color grouping functions and group lists:
 
 Hue grouping:
 
-    autothemer-hue-group
+#TABLE Function - Description #
+    autothemer-hue-group - color hue group for COLOR
+#TABLE#
 
 Builtin hue groups:
 
-    autothemer-hue-groups
-    autothemer-simple-hue-groups
+#TABLE Hue Groups - Description #
+    autothemer-hue-groups - group colors into major hue groups (default)
+    autothemer-simple-hue-groups - group colors into broad hue groups
+#TABLE#
 
 Brightness grouping:
 
-    autothemer-brightness-group
+#TABLE Function - Description #
+    autothemer-brightness-group - brightness group for COLOR
+#TABLE#
 
 Builtin brightness groups:
 
-    autothemer-dark-mid-light-brightness-groups
-    autothemer-10-percent-brightness-groups
-    autothemer-20-percent-brightness-groups
+#TABLE Brightness Groups - Description #
+    autothemer-dark-mid-light-brightness-groups - 3 brightness groups
+    autothemer-10-percent-brightness-groups - 10 brightness groups
+    autothemer-20-percent-brightness-groups - 5 brightness groups (default)
+#TABLE#
 
 Saturation grouping:
 
-    autothemer-saturation-group
+#TABLE Function - Description #
+    autothemer-saturation-group - saturation group for COLOR
+#TABLE#
 
 Builtin saturation groups:
 
-    autothemer-low-mid-high-saturation-groups
-    autothemer-10-percent-saturation-groups
-    autothemer-20-percent-saturation-groups
-
+#TABLE Saturation Groups - Description #
+    autothemer-low-mid-high-saturation-groups - 3 saturation groups
+    autothemer-10-percent-saturation-groups - 10 saturation groups
+    autothemer-20-percent-saturation-groups - 5 saturation groups (default)
+#TABLE#
 - - -
 
 Sorting:
@@ -785,11 +798,13 @@ Sorting:
 The sort/ordering functions take args A and B, which are expected
 to be `autothemer--color' structs.
 
-    autothemer-darkest-order
-    autothemer-lightest-order
-    autothemer-hue-order
-    autothemer-saturated-order
-    autothemer-desaturated-order"
+#TABLE Sort Functions - Description#
+    autothemer-darkest-order - darkest to lightest
+    autothemer-lightest-order - lightest to darkest
+    autothemer-hue-order - sort by hue
+    autothemer-saturated-order - sort by most saturated to least
+    autothemer-desaturated-order - sort by least saturated to most
+#TABLE#"
  (autothemer--plist-bind
   (group-fn
    group-args
@@ -839,6 +854,7 @@ supplied in OPTIONS will use defaults or prompt interactively.
     :h-space - horizontal-space between swatches (default: 10)
     :v-space - vertical-space between swatches (default: 10)
     :sort-palette - arrange palette using a function name
+    :group-swatches -  boolean
     :svg-out-file - the file/pathname to save SVG output
 #TABLE#
 
@@ -849,6 +865,7 @@ Note: Template parameters are filled by `format' so we mark them as follows:
 
 Page Template parameters:
 
+#TABLE Parameter - Description#
     %1$s  - width
     %2$s  - height
     %3$s  - font-family
@@ -859,15 +876,18 @@ Page Template parameters:
     %8$s  - theme-description
     %9$s  - theme-url
     %10$s - color swatches
+#TABLE#
 
 Swatch Template parameters:
 
+#TABLE Parameter - Description#
     %1$s - x
     %2$s - y
     %3$s - swatch-border-color
     %4$s - swatch-color
     %5$s - text-accent-color
-    %6$s - swatch-color-name"
+    %6$s - swatch-color-name
+#TABLE#"
   (interactive)
   (autothemer--plist-bind
     (theme-file
