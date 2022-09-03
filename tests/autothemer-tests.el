@@ -157,6 +157,7 @@
 
   (ert-deftest autothemer-color-hue ()
    "Test get hue of hex-color."
+    (should (= (autothemer-color-hue #s(autothemer--color example-color-020 "#2391CB")) 0.5575396825396826))
     (should (= (autothemer-color-hue "#FF0000") 0))
     (should (= (autothemer-color-hue "#FFFF00") 0.16666666666666666))
     (should (= (autothemer-color-hue "#00FF00") 0.33333333333333333))
@@ -164,6 +165,7 @@
   
   (ert-deftest autothemer-color-sat ()
     "Test get sat of hex-color."
+    (should (= (autothemer-color-sat #s(autothemer--color example-color-020 "#2391CB")) 0.8275862068965516))
     (should (= (autothemer-color-sat "#0000FF") 1.0))
     (should (= (autothemer-color-sat "#FF00FF") 1.0))
     (should (= (autothemer-color-sat "#778822") 0.75))
@@ -172,6 +174,7 @@
   
   (ert-deftest autothemer-color-brightness ()
     "Test get brightness of hex-color."
+    (should (= (autothemer-color-brightness #s(autothemer--color example-color-020 "#2391CB")) 0.796078431372549))
     (should (= (autothemer-color-brightness "#0000FF") 1.0))
     (should (= (autothemer-color-brightness "#00FF00") 1.0))
     (should (= (autothemer-color-brightness "#FF00FF") 1.0))
@@ -249,24 +252,27 @@
   (ert-deftest autothemer-group-colors ()
     "Group colors into a plist of color lists, with group names as keys."
     (should (equal
-                (autothemer-group-colors
-                 (list
-                  (make-autothemer--color :name 'example-color-005 :value "#112063")
-                  (make-autothemer--color :name 'example-color-006 :value "#88DDCC")
-                  (make-autothemer--color :name 'example-color-006 :value "#99DDCC")
-                  (make-autothemer--color :name 'example-color-006 :value "#FFDDCC")
-                  (make-autothemer--color :name 'example-color-006 :value "#FFEECC")
-                  (make-autothemer--color :name 'example-color-007 :value "#281993")
-                  (make-autothemer--color :name 'example-color-010 :value "#240933"))
-                 (list :group-fn 'autothemer-saturation-group
-                       :group-args autothemer-low-mid-high-saturation-groups))
-                '((high #s(autothemer--color example-color-005 "#112063")
-                        #s(autothemer--color example-color-007 "#281993")
-                        #s(autothemer--color example-color-010 "#240933"))
-                  (mid #s(autothemer--color example-color-006 "#88DDCC"))
-                  (low #s(autothemer--color example-color-006 "#99DDCC")
-                       #s(autothemer--color example-color-006 "#FFDDCC")
-                       #s(autothemer--color example-color-006 "#FFEECC"))))))
+             (autothemer-group-colors
+              (list
+               (make-autothemer--color :name 'example-color-005 :value "#112063")
+               (make-autothemer--color :name 'example-color-006 :value "#88DDCC")
+               (make-autothemer--color :name 'example-color-006 :value "#99DDCC")
+               (make-autothemer--color :name 'example-color-006 :value "#FFDDCC")
+               (make-autothemer--color :name 'example-color-006 :value "#FFEECC")
+               (make-autothemer--color :name 'example-color-007 :value "#281993")
+               (make-autothemer--color :name 'example-color-010 :value "#240933"))
+              (list :group-fn 'autothemer-saturation-group
+                    :group-args autothemer-low-mid-high-saturation-groups))
+             '((high
+                #s(autothemer--color example-color-005 "#112063")
+                #s(autothemer--color example-color-007 "#281993")
+                #s(autothemer--color example-color-010 "#240933"))
+               (mid
+                #s(autothemer--color example-color-006 "#88DDCC"))
+               (low
+                #s(autothemer--color example-color-006 "#99DDCC")
+                #s(autothemer--color example-color-006 "#FFDDCC")
+                #s(autothemer--color example-color-006 "#FFEECC"))))))
 
   (ert-deftest autothemer-group-and-sort ()
     "Group and sort a palette of `autothemer--color' structs."
@@ -313,42 +319,73 @@
                       :group-args autothemer-simple-hue-groups
                       :sort-fn autothemer-darkest-order))
 
-                   '((red #s(autothemer--color example-color-005 "#181818")
-                          #s(autothemer--color example-color-002 "#642C12")
-                          #s(autothemer--color example-color-001 "#702414")
-                          #s(autothemer--color example-color-035 "#B11D37")
-                          #s(autothemer--color example-color-036 "#E52929"))
-                     (orange #s(autothemer--color example-color-004 "#191204")
-                             #s(autothemer--color example-color-003 "#583410"))
-                     (green #s(autothemer--color example-color-006 "#191904")
-                            #s(autothemer--color example-color-009 "#162506")
-                            #s(autothemer--color example-color-008 "#243108")
-                            #s(autothemer--color example-color-007 "#373D0A")
-                            #s(autothemer--color example-color-010 "#224C0E")
-                            #s(autothemer--color example-color-012 "#0E4C0E")
-                            #s(autothemer--color example-color-014 "#0E4C22")
-                            #s(autothemer--color example-color-013 "#147024")
-                            #s(autothemer--color example-color-011 "#287C16"))
-                     (cyan #s(autothemer--color example-color-021 "#13416F")
-                           #s(autothemer--color example-color-015 "#167C49")
-                           #s(autothemer--color example-color-019 "#178297")
-                           #s(autothemer--color example-color-018 "#1AA4A4")
-                           #s(autothemer--color example-color-016 "#20BE87")
-                           #s(autothemer--color example-color-020 "#2391CB")
-                           #s(autothemer--color example-color-017 "#28E4C4"))
-                     (blue #s(autothemer--color example-color-026 "#170933")
-                           #s(autothemer--color example-color-028 "#240933")
-                           #s(autothemer--color example-color-024 "#0D0D4B")
-                           #s(autothemer--color example-color-023 "#112063")
-                           #s(autothemer--color example-color-022 "#13306F")
-                           #s(autothemer--color example-color-025 "#281993")
-                           #s(autothemer--color example-color-027 "#620FA9"))
-                     (magenta #s(autothemer--color example-color-030 "#330933")
-                              #s(autothemer--color example-color-029 "#63136F")
-                              #s(autothemer--color example-color-031 "#971782")
-                              #s(autothemer--color example-color-033 "#A41A5F")
-                              #s(autothemer--color example-color-032 "#D62499")
-                              #s(autothemer--color example-color-034 "#D82662")))))))
+                   '((red
+                      #s(autothemer--color example-color-005 "#181818")
+                      #s(autothemer--color example-color-002 "#642C12")
+                      #s(autothemer--color example-color-001 "#702414")
+                      #s(autothemer--color example-color-035 "#B11D37")
+                      #s(autothemer--color example-color-036 "#E52929"))
+                     (orange
+                      #s(autothemer--color example-color-004 "#191204")
+                      #s(autothemer--color example-color-003 "#583410"))
+                     (green
+                      #s(autothemer--color example-color-006 "#191904")
+                      #s(autothemer--color example-color-009 "#162506")
+                      #s(autothemer--color example-color-008 "#243108")
+                      #s(autothemer--color example-color-007 "#373D0A")
+                      #s(autothemer--color example-color-010 "#224C0E")
+                      #s(autothemer--color example-color-012 "#0E4C0E")
+                      #s(autothemer--color example-color-014 "#0E4C22")
+                      #s(autothemer--color example-color-013 "#147024")
+                      #s(autothemer--color example-color-011 "#287C16"))
+                     (cyan
+                      #s(autothemer--color example-color-021 "#13416F")
+                      #s(autothemer--color example-color-015 "#167C49")
+                      #s(autothemer--color example-color-019 "#178297")
+                      #s(autothemer--color example-color-018 "#1AA4A4")
+                      #s(autothemer--color example-color-016 "#20BE87")
+                      #s(autothemer--color example-color-020 "#2391CB")
+                      #s(autothemer--color example-color-017 "#28E4C4"))
+                     (blue
+                      #s(autothemer--color example-color-026 "#170933")
+                      #s(autothemer--color example-color-028 "#240933")
+                      #s(autothemer--color example-color-024 "#0D0D4B")
+                      #s(autothemer--color example-color-023 "#112063")
+                      #s(autothemer--color example-color-022 "#13306F")
+                      #s(autothemer--color example-color-025 "#281993")
+                      #s(autothemer--color example-color-027 "#620FA9"))
+                     (magenta
+                      #s(autothemer--color example-color-030 "#330933")
+                      #s(autothemer--color example-color-029 "#63136F")
+                      #s(autothemer--color example-color-031 "#971782")
+                      #s(autothemer--color example-color-033 "#A41A5F")
+                      #s(autothemer--color example-color-032 "#D62499")
+                      #s(autothemer--color example-color-034 "#D82662"))))))
 
+  (ert-deftest autothemer-groups-to-palette ()
+    "Flatten a grouped palette (keeping order)."
+    (should (equal (autothemer-groups-to-palette '((high
+                                                    #s(autothemer--color example-color-005 "#112063")
+                                                    #s(autothemer--color example-color-007 "#281993")
+                                                    #s(autothemer--color example-color-010 "#240933"))
+                                                   (mid
+                                                    #s(autothemer--color example-color-006 "#88DDCC"))
+                                                   (low
+                                                    #s(autothemer--color example-color-006 "#99DDCC")
+                                                    #s(autothemer--color example-color-006 "#FFDDCC")
+                                                    #s(autothemer--color example-color-006 "#FFEECC"))))
+                   '(  #s(autothemer--color example-color-005 "#112063")
+                       #s(autothemer--color example-color-007 "#281993")
+                       #s(autothemer--color example-color-010 "#240933")
+                       #s(autothemer--color example-color-006 "#88DDCC")
+                       #s(autothemer--color example-color-006 "#99DDCC")
+                       #s(autothemer--color example-color-006 "#FFDDCC")
+                       #s(autothemer--color example-color-006 "#FFEECC"))))))
+
+(defun autothemer-groups-to-palette (grouped-palette)
+  "Flatten a GROUPED-PALETTE from `autothemer-group-and-sort' to a single list."
+  (-flatten (--map (cdr it) grouped-palette)))
+
+(autothemer-color-hue #s(autothemer--color example-color-020 "#2391CB"))
 
 ;;; autothemer-tests.el ends here

@@ -286,8 +286,8 @@ For example:
 
 ```lisp
 (autothemer-generate-palette-svg 
-'(:theme-file "orangey-bits-theme.el"
-  :svg-out-file "test.svg"
+'(:theme-file "path/folder/my-autotheme.el"
+  :svg-out-file "path/folder/my-autotheme-palette.svg"
   :bg-color "#190700"
   :text-color "#FFE0C0"
   :text-accent-color "#90776C"
@@ -299,22 +299,31 @@ For example:
 
 #### autothemer-generate-palette-svg options
 
-| Option               | Description                                           |
-|----------------------|-------------------------------------------------------|
-| `:theme-file`        | Theme filename                                        |
-| `:theme-name`        | Override the title found in `:theme-file`             |
-| `:theme-description` | Override the description found in `:theme-file`       |
-| `:theme-url`         | Override the url found in `:theme-file`               |
-| `:swatch-width`      | px width of a color swatch (default: `100`)           |
-| `:swatch-height`     | px height of a color swatch (default: `150`)          |
-| `:columns`           | Number of columns for each palette row (default: `6`) |
-| `:page-template`     | See page-template below                               |
-| `:swatch-template`   | see swatch-template below                             |
-| `:font-family`       | Font name to use in the generated SVG                 |
-| `:bg-color`          | Background color                                      |
-| `:text-color`        | Text color                                            |
-| `:text-accent-color` | Text accent color                                     |
-| `:svg-out-file`      | SVG output filename                                   |
+| Option                | Description                                           |
+|-----------------------|-------------------------------------------------------|
+| `theme-file`          | Theme filename                                        |
+| `theme-name`          | Override the title found in `:theme-file`             |
+| `theme-description`   | Override the description found in `:theme-file`       |
+| `theme-url`           | Override the url found in `:theme-file`               |
+| `font-family`         | Font name to use in the generated SVG                 |
+| `columns`             | Number of columns for each palette row (default: `6`) |
+| `bg-color`            | Page background color                                 |
+| `text-color`          | Main text color                                       |
+| `text-accent-color`   | Accent text color                                     |
+| `page-template`       | See page-template below                               |
+| `page-top-margin`     | Top margin of page (Default: `120`)                   |
+| `page-right-margin`   | Right margin of page (Default: `30`)                  |
+| `page-bottom-margin`  | Bottom margin of page (Default: `60`)                 |
+| `page-left-margin`    | Left margin of page (Default: `30`)                   |
+| `swatch-template`     | See swatch-template below                             |
+| `swatch-border-color` | The border color of a color swatch                    |
+| `swatch-width`        | Px spacing width of a color swatch (default: `100`)   |
+| `swatch-height`       | Px spacing height of a color swatch (default: `150`)  |
+| `swatch-rotate`       | Degrees of rotation for swatch (default: `45`)        |
+| `h-space`             | Horizontal-space between swatches (default: `10`)     |
+| `v-space`             | Vertical-space between swatches (default: `10`)       |
+| `sort-palette`        | Arrange palette using a function see below            |
+| `svg-out-file`        | The file/pathname to save SVG output                  |
 
 ##### :page-template and :swatch-template
 
@@ -343,51 +352,108 @@ The builtin page template
 ```svg
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
-"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+          "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="%1$spx" height="%2$spx"
      version="1.1"
      xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink">
-  <style>
-    text {
-    font-family: "%3$s";
-    fill: %4$s;
-    }
-  </style>
-  <rect x="0" y="0" rx="10" width="%1$spx" height="%2$spx" id="background-panel" fill="%6$s"/>
-  <g transform="translate(14,10)">
-    <a xlink:href="%9$s">
-    <text style="font-size:42pt;" font-weight="bold" x="3%%" y="50" id="theme-name">%7$s</text>
-    <text style="font-size:12pt;" x="4%%" y="75" id="theme-description">%8$s</text>
-    <text style="font-size:8pt;fill: %5$s" text-anchor="end" x="95%%" y="20" id="theme-url">%9$s</text>
-    </a>
-  </g>
-  <g transform="translate(70,-40)">
-  %10$s
-  </g>
+    <style>
+     text {
+         font-family: "%3$s";
+         fill: %4$s;
+     }
+    </style>
+    <rect x="0" y="0" rx="10" width="%1$spx" height="%2$spx" id="background-panel" fill="%6$s"/>
+    <g transform="translate(14,10)">
+        <a xlink:href="%9$s">
+            <text style="font-size:42pt;" font-weight="bold" x="3%%" y="50" id="theme-name">%7$s</text>
+            <text style="font-size:12pt;" x="4%%" y="75" id="theme-description">%8$s</text>
+            <text style="font-size:8pt;fill: %5$s" text-anchor="end" x="95%%" y="20" id="theme-url">%9$s</text>
+        </a>
+    </g>
+    <g transform="translate(70,-40)">
+        %10$s
+    </g>
 </svg>
 ```
 
 ###### Swatch Template parameters
 
-| Param  | Description         |
-|--------|---------------------|
-| `%1$s` | `x`                 |
-| `%2$s` | `y`                 |
-| `%3$s` | `swatch-color`      |
-| `%4$s` | `text-color`        |
-| `%5$s` | `swatch-color-name` |
+| Param  | Description           |
+|--------|-----------------------|
+| `%1$s` | `x`                   |
+| `%2$s` | `y`                   |
+| `%3$s` | `swatch-border-color` |
+| `%4$s` | `color`               |
+| `%5$s` | `text-accent-color`   |
+| `%6$s` | `name`                |
+| `%7$s` | `swatch-width`        |
+| `%8$s` | `swatch-height`       |
+| `%9$s` | `swatch-rotate`       |
 
 The builtin swatch template:
 
 ``` svg
-<g transform="translate(%1$s,%2$s),rotate(45)">
- <ellipse cx="70" cy="70" rx="45" ry="45" id="background-color" fill="%3$s"/>
- <ellipse cx="70" cy="70" rx="42" ry="42" id="color" fill="%4$s"/>
- <text style="font-size:7pt" font-weight="bold" x="52" y="125" id="color-name">%6$s</text>
- <text style="font-size:7pt; fill:%5$s;" font-weight="bold" x="52" y="134" id="color">%4$s</text>
+<g transform="translate(%1$s,%2$s),rotate(%9$s)">
+    <ellipse cx="70" cy="70" rx="45" ry="45" id="background-color" fill="%3$s"/>
+    <ellipse cx="70" cy="70" rx="42" ry="42" id="color" fill="%4$s"/>
+    <text style="font-size:7pt" font-weight="bold" x="52" y="125" id="color-name">%6$s</text>
+    <text style="font-size:7pt; fill:%5$s;" font-weight="bold" x="52" y="134" id="color">%4$s</text>
+    <!-- Rect below is for debug set stroke width to be visible -->
+    <rect x="0" y="0" width="%7$spx" height="%8$spx" class="debug-rect" fill-opacity="0.0" stroke-width="0.0mm" stroke="#FF8000"/>
 </g>
 ```
+###### Sorting / Grouping palette colors
+
+The option `sort-palette` can be a `sort function`, or a `plist`.
+
+Options is a plist of:
+
+    :group-fn - mandatory group function
+    :group-args - optional group args (to use a non-default group)
+    :sort-fn - optional sort function
+
+###### Sorting:
+
+The sort/ordering functions take args A and B, which are expected
+to be `autothemer--color` structs.
+
+- Darkest to lightest:      `autothemer-darkest-order`
+- Lightest to darkest:      `autothemer-lightest-order`
+- Hue:                      `autothemer-hue-order`
+- Saturated to desaturated: `autothemer-saturated-order`
+- Desaturated to saturated: `autothemer-desaturated-order`
+
+###### Grouping
+
+Hue grouping:
+
+    autothemer-hue-group
+
+Builtin hue groups:
+
+    autothemer-hue-groups
+    autothemer-simple-hue-groups
+
+Brightness grouping:
+
+    autothemer-brightness-group
+
+Builtin brightness groups:
+
+    autothemer-dark-mid-light-brightness-groups
+    autothemer-10-percent-brightness-groups
+    autothemer-20-percent-brightness-groups
+
+Saturation grouping:
+
+    autothemer-saturation-group
+
+Builtin saturation groups:
+
+    autothemer-low-mid-high-saturation-groups
+    autothemer-10-percent-saturation-groups
+    autothemer-20-percent-saturation-groups
 
 #### SVG palette templates in the Wiki
 

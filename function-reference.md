@@ -16,9 +16,6 @@ assist with theme building, here are a few highlights...
 - Colorize/font-lock palette color names in the buffer
   - `autothemer-colorize`  (requires `rainbow-mode` during development.)
 
-
-Note in the function reference, the fucntion prefix `autothemer--` indicates internal
-functions.
  - - -
 ## Functions
 
@@ -40,29 +37,31 @@ Create an SVG palette image for a theme.
 Optionally supply `options` (a plist, all keys are optional,
 required values will default or prompt interactively.):
 
+<TABLE :option - description>
     :theme-file - theme filename
     :theme-name - override the title found in :theme-file
     :theme-description - override the description found in :theme-file
     :theme-url - override the url found in :theme-file
-    :swatch-width - px spacing width of a color swatch (default: 100)
-    :swatch-height - px spacing height of a color swatch (default: 150)
-    :swatch-rotate - degrees of rotation for swatch (default: 45)
+    :font-family - font name to use in the generated SVG
     :columns - number of columns for each palette row (default: 6)
+    :bg-color
+    :text-color
+    :text-accent-color
     :page-template - see page-template below
     :page-top-margin - (default 120)
     :page-right-margin - (default 30)
     :page-bottom-margin - (default 60)
     :page-left-margin - (default 30)
-    :h-space - (default 10)
-    :v-space - (default 10)
     :swatch-template - see swatch-template below
-    :font-family - font name to use in the generated SVG
-    :bg-color
-    :text-color
-    :text-accent-color
-    :swatch-border-color
-    :sort-palette
-    :svg-out-file
+    :swatch-border-color - the border color of a color swatch
+    :swatch-width - px spacing width of a color swatch (default: 100)
+    :swatch-height - px spacing height of a color swatch (default: 150)
+    :swatch-rotate - degrees of rotation for swatch (default: 45)
+    :h-space - horizontal-space between swatches (default 10)
+    :v-space - vertical-space between swatches (default 10)
+    :sort-palette - arrange palette using a function name
+    :svg-out-file - the file/pathname to save SVG output
+<TABLE>
 
 For advanced customization the :page-template and :swatch-template can be
 used to provide customize the SVG templates.
@@ -165,33 +164,33 @@ The default is `autothemer-20-percent-brightness-groups`.
 
 ### autothemer-color-brightness
 
-Return the HSV brightness of `hex-color`.
+Return the HSV brightness of `color` (hex color or autothemer--color struct).
 
 <sup>function signature</sup>
 ```lisp
-(autothemer-color-brightness (hex-color))
+(autothemer-color-brightness (color))
 ```
 
 - - -
 
 ### autothemer-color-hue
 
-Return the HSV hue of `hex-color`.
+Return the HSV hue of `color` (hex color or autothemer--color struct).
 
 <sup>function signature</sup>
 ```lisp
-(autothemer-color-hue (hex-color))
+(autothemer-color-hue (color))
 ```
 
 - - -
 
 ### autothemer-color-sat
 
-Return the HSV sat of `hex-color`.
+Return the HSV saturation of `color` (hex color or autothemer--color struct).
 
 <sup>function signature</sup>
 ```lisp
-(autothemer-color-sat (hex-color))
+(autothemer-color-sat (color))
 ```
 
 - - -
@@ -214,6 +213,17 @@ Return t if the darkness of `a` > `b`.
 <sup>function signature</sup>
 ```lisp
 (autothemer-darkest-order (a b))
+```
+
+- - -
+
+### autothemer-desaturated-order
+
+Return t if the saturation of `a` < `b`.
+
+<sup>function signature</sup>
+```lisp
+(autothemer-desaturated-order (a b))
 ```
 
 - - -
@@ -266,11 +276,11 @@ Sorting:
 The sort/ordering functions take args A and B, which are expected
 to be `autothemer--color` structs.
 
-Darkest to lightest:      `(autothemer-darkest-order a b)`
-Lightest to darkest:      `(autothemer-lightest-order a b)`
-Hue:                      `(autothemer-hue-order a b)`
-Saturated to desaturated: `(autothemer-saturated-order a b)`
-Desaturated to saturated: `(autothemer-desaturated-order a b)`
+    autothemer-darkest-order
+    autothemer-lightest-order
+    autothemer-hue-order
+    autothemer-saturated-order
+    autothemer-desaturated-order
 
 <sup>function signature</sup>
 ```lisp
@@ -300,6 +310,17 @@ Sort `groups` of colors using `sort-fn`.
 <sup>function signature</sup>
 ```lisp
 (autothemer-group-sort (groups sort-fn))
+```
+
+- - -
+
+### autothemer-groups-to-palette
+
+Flatten a `grouped-palette` from `autothemer-group-and-sort` to a single list.
+
+<sup>function signature</sup>
+```lisp
+(autothemer-groups-to-palette (grouped-palette))
 ```
 
 - - -
@@ -356,17 +377,6 @@ Return t if the hue of `a` > `b`.
 
 - - -
 
-### autothemer-hue-sat-order
-
-Return t if the hue and sat of `a` > `b`.
-
-<sup>function signature</sup>
-```lisp
-(autothemer-hue-sat-order (a b))
-```
-
-- - -
-
 ### autothemer-lightest-order
 
 Return t if the lightness of `a` > `b`.
@@ -405,17 +415,21 @@ The default is `autothemer-20-percent-saturation-groups`.
 
 ### autothemer-sort-palette
 
-Produce a list of sorted `theme-colors` using `fn`.
+Produce a list of sorted `theme-colors` using `sort-fn`.
 
-If `fn` is nil, sort by default `fn` `autothemer-darkest-order`.
+If `sort-fn` is nil, sort by default `autothemer-darkest-order`.
 
 `autothemer-lightest-order` is available to balance the force.
 
 There are also `autothemer-hue-order` and `autothemer-saturated-order`
 
+Grouping is supported via `group-fn` & `group-args`.
+
+See `autothemer-group-and-sort`.
+
 <sup>function signature</sup>
 ```lisp
-(autothemer-sort-palette (theme-colors &optional fn))
+(autothemer-sort-palette (theme-colors &optional sort-fn group-fn group-args))
 ```
 
 - - -

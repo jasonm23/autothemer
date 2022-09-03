@@ -42,9 +42,6 @@
 ;; - Colorize/font-lock palette color names in the buffer
 ;;   - `autothemer-colorize'  (requires `rainbow-mode' during development.)
 ;;
-;;
-;; Note in the function reference, the fucntion prefix `autothemer--' indicates internal
-;; functions.
 ;;; Code:
 (require 'cl-lib)
 (require 'dash)
@@ -526,6 +523,8 @@ Colors are from `autothemer-current-theme'."
          (0 (rainbow-colorize-by-assoc (autothemer--colorize-alist))))))
   (font-lock-add-keywords nil autothemer--colors-font-lock-keywords t))
 
+;;; Color conversion
+
 (defun autothemer--color-to-hsv (rgb)
   "Convert RGB, a list of `(r g b)' to list `(h s v)'.
 The `r' `g' `b' values can range between `0..65535'.
@@ -563,17 +562,20 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
      (* #x101 (ash (logand #xFF00 rgb) -8))
      (* #x101 (logand #xFF rgb)))))
 
-(defun autothemer-color-hue (hex-color)
-  "Return the HSV hue of HEX-COLOR."
-  (car (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+(defun autothemer-color-hue (color)
+  "Return the HSV hue of COLOR (hex color or autothemer--color struct)."
+  (cond ((stringp color) (car (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
+        ((autothemer--color-p color) (autothemer-color-hue (autothemer--color-value color)))))
 
-(defun autothemer-color-sat (hex-color)
-  "Return the HSV sat of HEX-COLOR."
-  (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+(defun autothemer-color-sat (color)
+  "Return the HSV saturation of COLOR (hex color or autothemer--color struct)."
+  (cond ((stringp color) (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
+        ((autothemer--color-p color) (autothemer-color-sat (autothemer--color-value color)))))
 
-(defun autothemer-color-brightness (hex-color)
-  "Return the HSV brightness of HEX-COLOR."
-  (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb hex-color))))
+(defun autothemer-color-brightness (color)
+  "Return the HSV brightness of COLOR (hex color or autothemer--color struct)."
+  (cond ((stringp color) (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
+        ((autothemer--color-p color) (autothemer-color-brightness (autothemer--color-value color)))))
 
 ;;; Sort/Order of autothemer--color structs.
 
@@ -595,32 +597,33 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
         (b (autothemer-color-sat (autothemer--color-value b))))
       (> a b)))
 
+(defun autothemer-desaturated-order (a b)
+  "Return t if the saturation of A < B."
+  (let ((a (autothemer-color-sat (autothemer--color-value a)))
+        (b (autothemer-color-sat (autothemer--color-value b))))
+      (< a b)))
+
 (defun autothemer-hue-order (a b)
   "Return t if the hue of A > B."
   (let ((a (autothemer-color-hue (autothemer--color-value a)))
         (b (autothemer-color-hue (autothemer--color-value b))))
       (> a b)))
 
-(defun autothemer-hue-sat-order (a b)
-  "Return t if the hue and sat of A > B."
-  (let ((a-hue (autothemer-color-hue (autothemer--color-value a)))
-        (b-hue (autothemer-color-hue (autothemer--color-value b)))
-        (a-sat (autothemer-color-sat (autothemer--color-value a)))
-        (b-sat (autothemer-color-sat (autothemer--color-value b)))
-        (sort-hash-fmt "%016s-%016s"))
-    (string> (format sort-hash-fmt a-hue a-sat)
-             (format sort-hash-fmt b-hue b-sat))))
+(defun autothemer-sort-palette (theme-colors &optional sort-fn group-fn group-args)
+  "Produce a list of sorted THEME-COLORS using SORT-FN.
 
-(defun autothemer-sort-palette (theme-colors &optional fn)
-  "Produce a list of sorted THEME-COLORS using FN.
-
-If FN is nil, sort by default FN `autothemer-darkest-order'.
+If SORT-FN is nil, sort by default `autothemer-darkest-order'.
 
 `autothemer-lightest-order' is available to balance the force.
 
-There are also `autothemer-hue-order' and `autothemer-saturated-order'"
-  (let ((fn (or fn 'autothemer-darkest-order)))
-     (-sort fn theme-colors)))
+There are also `autothemer-hue-order' and `autothemer-saturated-order'
+
+Grouping is supported via GROUP-FN & GROUP-ARGS.
+
+See `autothemer-group-and-sort'."
+  (let ((sort-fn (or sort-fn 'autothemer-darkest-order))
+        (sorted (-sort sort-fn theme-colors)))
+    sorted))
 
 ;; Color Grouping
 
@@ -782,11 +785,11 @@ Sorting:
 The sort/ordering functions take args A and B, which are expected
 to be `autothemer--color' structs.
 
-Darkest to lightest:      `(autothemer-darkest-order a b)'
-Lightest to darkest:      `(autothemer-lightest-order a b)'
-Hue:                      `(autothemer-hue-order a b)'
-Saturated to desaturated: `(autothemer-saturated-order a b)'
-Desaturated to saturated: `(autothemer-desaturated-order a b)'"
+    autothemer-darkest-order
+    autothemer-lightest-order
+    autothemer-hue-order
+    autothemer-saturated-order
+    autothemer-desaturated-order"
  (autothemer--plist-bind
   (group-fn
    group-args
@@ -801,37 +804,43 @@ Desaturated to saturated: `(autothemer-desaturated-order a b)'"
                           sort-fn)))
       sorted-groups)))
 
+(defun autothemer-groups-to-palette (grouped-palette)
+  "Flatten a GROUPED-PALETTE from `autothemer-group-and-sort' to a single list."
+  (-flatten (--map (cdr it) grouped-palette)))
+
 ;;; SVG Palette generator...
 
 (defun autothemer-generate-palette-svg (&optional options)
   "Create an SVG palette image for a theme.
 
-Optionally supply OPTIONS (a plist, all keys are optional,
-required values will default or prompt interactively.):
+Optional parameter `options` (a plist). Any required values not
+supplied in OPTIONS will use defaults or prompt interactively.
 
+#TABLE Option - Description #
     :theme-file - theme filename
     :theme-name - override the title found in :theme-file
     :theme-description - override the description found in :theme-file
     :theme-url - override the url found in :theme-file
+    :font-family - font name to use in the generated SVG
+    :columns - number of columns for each palette row (default: 6)
+    :bg-color - Page background color
+    :text-color - Main text color
+    :text-accent-color - Text accent color
+    :page-template - see page-template below
+    :page-top-margin - (default: 120)
+    :page-right-margin - (default: 30)
+    :page-bottom-margin - (default: 60)
+    :page-left-margin - (default: 30)
+    :swatch-template - see swatch-template below
+    :swatch-border-color - the border color of a color swatch
     :swatch-width - px spacing width of a color swatch (default: 100)
     :swatch-height - px spacing height of a color swatch (default: 150)
     :swatch-rotate - degrees of rotation for swatch (default: 45)
-    :columns - number of columns for each palette row (default: 6)
-    :page-template - see page-template below
-    :page-top-margin - (default 120)
-    :page-right-margin - (default 30)
-    :page-bottom-margin - (default 60)
-    :page-left-margin - (default 30)
-    :h-space - (default 10)
-    :v-space - (default 10)
-    :swatch-template - see swatch-template below
-    :font-family - font name to use in the generated SVG
-    :bg-color
-    :text-color
-    :text-accent-color
-    :swatch-border-color
-    :sort-palette
-    :svg-out-file
+    :h-space - horizontal-space between swatches (default: 10)
+    :v-space - vertical-space between swatches (default: 10)
+    :sort-palette - arrange palette using a function name
+    :svg-out-file - the file/pathname to save SVG output
+#TABLE#
 
 For advanced customization the :page-template and :swatch-template can be
 used to provide customize the SVG templates.
@@ -865,29 +874,24 @@ Swatch Template parameters:
      theme-name
      theme-description
      theme-url
-
-     sort-palette
-     swatch-width
-     swatch-height
-     swatch-rotate
+     font-family
      columns
-
+     bg-color
+     text-color
+     text-accent-color
+     page-template
      page-top-margin
      page-right-margin
      page-bottom-margin
      page-left-margin
-
-     page-template
      swatch-template
-
-     font-family
-
-     bg-color
-     text-color
-     text-accent-color
      swatch-border-color
+     swatch-width
+     swatch-height
+     swatch-rotate
      h-space
      v-space
+     sort-palette
      svg-out-file)
     options
    (let ((theme-file (or theme-file (read-file-name "Select autothemer theme .el file: "))))
@@ -963,6 +967,11 @@ Swatch Template parameters:
             (text-color          (or text-color          (autothemer--color-value (autothemer--select-color "Select Text color: "))))
             (text-accent-color   (or text-accent-color   (autothemer--color-value (autothemer--select-color "Select Text accent color: "))))
             (swatch-border-color (or swatch-border-color (autothemer--color-value (autothemer--select-color "Select swatch border color: "))))
+            (sort-palette        (or sort-palette
+                                     (list
+                                      :sort-fn (read--expression "Sort function (TAB completion, enter nil to skip): " "'autothemer-")
+                                      :group-fn (read--expression "Group function (TAB completion, enter nil to skip): " "'autothemer-")
+                                      :group-args (read--expression "Group list (TAB completion, enter nil to skip): " "autothemer-"))))
 
             (svg-out-file (or svg-out-file (read-file-name (format "Enter a Filename to save SVG palette for %s." theme-name))))
             (svg-swatches (string-join
@@ -983,10 +992,9 @@ Swatch Template parameters:
                                              text-accent-color
                                              name swatch-width swatch-height swatch-rotate)))
                              (if sort-palette
-                                 (if (eql t sort-palette)
-                                     (autothemer-sort-palette colors)
-                                   (autothemer-sort-palette colors (intern sort-palette)))
-                                 colors))
+                                 (autothemer-groups-to-palette
+                                  (autothemer-group-and-sort colors sort-palette))
+                               colors))
                             "\n")))
        (with-temp-file svg-out-file
          (insert
