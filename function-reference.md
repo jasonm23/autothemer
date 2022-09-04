@@ -84,32 +84,32 @@ Create an SVG palette image for a theme.
 Optional parameter `options` (a plist). Any required values not
 supplied in `options` will use defaults or prompt interactively.
 
-| Option | Description |
-|-|-|
-    | `:theme-file` | theme filename |
-    | `:theme-name` | override the title found in :theme-file |
-    | `:theme-description` | override the description found in :theme-file |
-    | `:theme-url` | override the url found in :theme-file |
-    | `:font-family` | font name to use in the generated SVG |
-    | `:columns` | number of columns for each palette row (default: 6) |
-    | `:bg-color` | Page background color |
-    | `:text-color` | Main text color |
-    | `:text-accent-color` | Text accent color |
-    | `:page-template` | see page-template below |
-    | `:page-top-margin` | (default: 120) |
-    | `:page-right-margin` | (default: 30) |
-    | `:page-bottom-margin` | (default: 60) |
-    | `:page-left-margin` | (default: 30) |
-    | `:swatch-template` | see swatch-template below |
-    | `:swatch-border-color` | the border color of a color swatch |
-    | `:swatch-width` | px spacing width of a color swatch (default: 100) |
-    | `:swatch-height` | px spacing height of a color swatch (default: 150) |
-    | `:swatch-rotate` | degrees of rotation for swatch (default: 45) |
-    | `:h-space` | horizontal-space between swatches (default: 10) |
-    | `:v-space` | vertical-space between swatches (default: 10) |
-    | `:sort-palette` | arrange palette using a function name |
-    | `:group-swatches` |  boolean |
-    | `:svg-out-file` | the file/pathname to save SVG output |
+| Option                 | Description                                         |
+|------------------------|-----------------------------------------------------|
+| `:theme-file`          | theme filename                                      |
+| `:theme-name`          | override the title found in :theme-file             |
+| `:theme-description`   | override the description found in :theme-file       |
+| `:theme-url`           | override the url found in :theme-file               |
+| `:font-family`         | font name to use in the generated SVG               |
+| `:columns`             | number of columns for each palette row (default: 6) |
+| `:bg-color`            | Page background color                               |
+| `:text-color`          | Main text color                                     |
+| `:text-accent-color`   | Text accent color                                   |
+| `:page-template`       | see page-template below                             |
+| `:page-top-margin`     | (default: 120)                                      |
+| `:page-right-margin`   | (default: 30)                                       |
+| `:page-bottom-margin`  | (default: 60)                                       |
+| `:page-left-margin`    | (default: 30)                                       |
+| `:swatch-template`     | see swatch-template below                           |
+| `:swatch-border-color` | the border color of a color swatch                  |
+| `:swatch-width`        | px spacing width of a color swatch (default: 100)   |
+| `:swatch-height`       | px spacing height of a color swatch (default: 150)  |
+| `:swatch-rotate`       | degrees of rotation for swatch (default: 45)        |
+| `:h-space`             | horizontal-space between swatches (default: 10)     |
+| `:v-space`             | vertical-space between swatches (default: 10)       |
+| `:sort-palette`        | arrange palette using a function name               |
+| `:group-swatches`      | boolean                                             |
+| `:svg-out-file`        | the file/pathname to save SVG output                |
 
 For advanced customization the :page-template and :swatch-template can be
 used to provide customize the SVG templates.
@@ -118,29 +118,29 @@ Note: Template parameters are filled by `format` so we mark them as follows:
 
 Page Template parameters:
 
-| Parameter | Description |
-|-|-|
-    %1$s  - width
-    %2$s  - height
-    %3$s  - font-family
-    %4$s  - text-color
-    %5$s  - text-accent-color
-    %6$s  - bg-color
-    %7$s  - theme-name
-    %8$s  - theme-description
-    %9$s  - theme-url
-    | `%10$s` | color swatches |
+| Parameter | Description       |
+|-----------|-------------------|
+| `%1$s`    | width             |
+| `%2$s`    | height            |
+| `%3$s`    | font-family       |
+| `%4$s`    | text-color        |
+| `%5$s`    | text-accent-color |
+| `%6$s`    | bg-color          |
+| `%7$s`    | theme-name        |
+| `%8$s`    | theme-description |
+| `%9$s`    | theme-url         |
+| `%10$s`   | color swatches    |
 
 Swatch Template parameters:
 
-| Parameter | Description |
-|-|-|
-    | `%1$s` | x |
-    | `%2$s` | y |
-    | `%3$s` | swatch-border-color |
-    | `%4$s` | swatch-color |
-    | `%5$s` | text-accent-color |
-    | `%6$s` | swatch-color-name |
+| Parameter | Description         |
+|-----------|---------------------|
+| `%1$s`    | x                   |
+| `%2$s`    | y                   |
+| `%3$s`    | swatch-border-color |
+| `%4$s`    | swatch-color        |
+| `%5$s`    | text-accent-color   |
+| `%6$s`    | swatch-color-name   |
 
 <sup>function signature</sup>
 ```lisp
@@ -286,48 +286,48 @@ Group and sort `palette` using `options`.
 
 Options is a plist of:
 
-| Option | Description |
-|-|-|
-    | `:group-fn` | mandatory group function |
-    | `:group-args` | optional group args (to use a non-default group) |
-    | `:sort-fn` | optional sort function |
+| Option        | Description                                      |
+|---------------|--------------------------------------------------|
+| `:group-fn`   | mandatory group function                         |
+| `:group-args` | optional group args (to use a non-default group) |
+| `:sort-fn`    | optional sort function                           |
 
 See color grouping functions and group lists:
 
 Hue grouping:
 
-| Function | Description |
-|-|-|
-    | `autothemer-hue-group` | color hue group for COLOR |
+| Function               | Description               |
+|------------------------|---------------------------|
+| `autothemer-hue-group` | color hue group for COLOR |
 
-| Hue Groups | Description |
-|-|-|
-    | `autothemer-hue-groups` | group colors into major hue groups (default) |
-    | `autothemer-simple-hue-groups` | group colors into broad hue groups |
+| Hue Groups                     | Description                                  |
+|--------------------------------|----------------------------------------------|
+| `autothemer-hue-groups`        | group colors into major hue groups (default) |
+| `autothemer-simple-hue-groups` | group colors into broad hue groups           |
 
 Brightness grouping:
 
-| Function | Description |
-|-|-|
-    | `autothemer-brightness-group` | brightness group for COLOR |
+| Function                      | Description                |
+|-------------------------------|----------------------------|
+| `autothemer-brightness-group` | brightness group for COLOR |
 
-| Brightness Groups | Description |
-|-|-|
-    | `autothemer-dark-mid-light-brightness-groups` | 3 brightness groups |
-    | `autothemer-10-percent-brightness-groups` | 10 brightness groups |
-    | `autothemer-20-percent-brightness-groups` | 5 brightness groups (default) |
+| Brightness Groups                             | Description                   |
+|-----------------------------------------------|-------------------------------|
+| `autothemer-dark-mid-light-brightness-groups` | 3 brightness groups           |
+| `autothemer-10-percent-brightness-groups`     | 10 brightness groups          |
+| `autothemer-20-percent-brightness-groups`     | 5 brightness groups (default) |
 
 Saturation grouping:
 
-| Function | Description |
-|-|-|
-    | `autothemer-saturation-group` | saturation group for COLOR |
+| Function                      | Description                |
+|-------------------------------|----------------------------|
+| `autothemer-saturation-group` | saturation group for COLOR |
 
-| Saturation Groups | Description |
-|-|-|
-    | `autothemer-low-mid-high-saturation-groups` | 3 saturation groups |
-    | `autothemer-10-percent-saturation-groups` | 10 saturation groups |
-    | `autothemer-20-percent-saturation-groups` | 5 saturation groups (default) |
+| Saturation Groups                           | Description                   |
+|---------------------------------------------|-------------------------------|
+| `autothemer-low-mid-high-saturation-groups` | 3 saturation groups           |
+| `autothemer-10-percent-saturation-groups`   | 10 saturation groups          |
+| `autothemer-20-percent-saturation-groups`   | 5 saturation groups (default) |
 - - -
 
 Sorting:
@@ -335,13 +335,13 @@ Sorting:
 The sort/ordering functions take args A and B, which are expected
 to be `autothemer--color` structs.
 
-| Sort Functions | Description |
-|-|-|
-    | `autothemer-darkest-order` | darkest to lightest |
-    | `autothemer-lightest-order` | lightest to darkest |
-    | `autothemer-hue-order` | sort by hue |
-    | `autothemer-saturated-order` | sort by most saturated to least |
-    | `autothemer-desaturated-order` | sort by least saturated to most |
+| Sort Functions                 | Description                     |
+|--------------------------------|---------------------------------|
+| `autothemer-darkest-order`     | darkest to lightest             |
+| `autothemer-lightest-order`    | lightest to darkest             |
+| `autothemer-hue-order`         | sort by hue                     |
+| `autothemer-saturated-order`   | sort by most saturated to least |
+| `autothemer-desaturated-order` | sort by least saturated to most |
 
 <sup>function signature</sup>
 ```lisp
