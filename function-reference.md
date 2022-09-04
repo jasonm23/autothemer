@@ -17,11 +17,58 @@ assist with theme building, here are a few highlights...
   - `autothemer-colorize`  (requires `rainbow-mode` during development.)
 
  - - -
-## Functions
+# Function reference
 
-### autothemer-colorize [command]
+### Commands
+- [autothemer-colorize](#autothemer-colorize-)
+- [autothemer-generate-palette-svg](#autothemer-generate-palette-svg---options)
+- [autothemer-generate-templates](#autothemer-generate-templates---regexp)
+- [autothemer-generate-templates-filtered](#autothemer-generate-templates-filtered--regexp)
+- [autothemer-insert-color](#autothemer-insert-color-)
+- [autothemer-insert-color-name](#autothemer-insert-color-name-)
+### User Functions
+- [autothemer-brightness-group](#autothemer-brightness-group--color--brightness-groups) 
+- [autothemer-color-brightness](#autothemer-color-brightness--color) 
+- [autothemer-color-hue](#autothemer-color-hue--color) 
+- [autothemer-color-sat](#autothemer-color-sat--color) 
+- [autothemer-color-to-group](#autothemer-color-to-group--color-fn-groups) 
+- [autothemer-darkest-order](#autothemer-darkest-order--a-b) 
+- [autothemer-desaturated-order](#autothemer-desaturated-order--a-b) 
+- [autothemer-group-and-sort](#autothemer-group-and-sort--palette-options) 
+- [autothemer-group-colors](#autothemer-group-colors--palette-options) 
+- [autothemer-group-sort](#autothemer-group-sort--groups-sort-fn) 
+- [autothemer-groups-to-palette](#autothemer-groups-to-palette--grouped-palette) 
+- [autothemer-hex-to-rgb](#autothemer-hex-to-rgb--hex) 
+- [autothemer-hue-group](#autothemer-hue-group--color--hue-groups) 
+- [autothemer-hue-order](#autothemer-hue-order--a-b) 
+- [autothemer-lightest-order](#autothemer-lightest-order--a-b) 
+- [autothemer-saturated-order](#autothemer-saturated-order--a-b) 
+- [autothemer-saturation-group](#autothemer-saturation-group--color--saturation-groups) 
+- [autothemer-sort-palette](#autothemer-sort-palette--theme-colors--sort-fn-group-fn-group-args) 
+### Internal Functions
+- [autothemer--alist-to-reduced-spec](#autothemer--alist-to-reduced-spec--facename-alist)
+- [autothemer--approximate-spec](#autothemer--approximate-spec--reduced-spec-theme)
+- [autothemer--color-distance](#autothemer--color-distance--color-autothemer-color)
+- [autothemer--color-to-hsv](#autothemer--color-to-hsv--rgb)
+- [autothemer--colorize-alist](#autothemer--colorize-alist-)
+- [autothemer--cons-to-tree](#autothemer--cons-to-tree--the-cons)
+- [autothemer--current-theme-guard](#autothemer--current-theme-guard-)
+- [autothemer--demote-heads](#autothemer--demote-heads--expr)
+- [autothemer--extract-display](#autothemer--extract-display--palette-n)
+- [autothemer--extract-let-block](#autothemer--extract-let-block--palette-n)
+- [autothemer--face-to-alist](#autothemer--face-to-alist--face)
+- [autothemer--fill-empty-palette-slots](#autothemer--fill-empty-palette-slots--palette)
+- [autothemer--find-closest-color](#autothemer--find-closest-color--colors-color)
+- [autothemer--get-color](#autothemer--get-color--color-name)
+- [autothemer--pad-with-nil](#autothemer--pad-with-nil--row-min-number-of-elements)
+- [autothemer--reduced-spec-to-facespec](#autothemer--reduced-spec-to-facespec--display-reduced-specs)
+- [autothemer--replace-nil-by-precursor](#autothemer--replace-nil-by-precursor--palette-row)
+- [autothemer--select-color](#autothemer--select-color---prompt)
+- [autothemer--unindent](#autothemer--unindent--s)
+- [autothemer--unthemed-faces](#autothemer--unthemed-faces-)
+### <a id="autothemer-colorize-" aria-hidden="true"></a>autothemer-colorize command
 
-Colorize using rainbow-mode.
+In the current buffer, colorize palette color names, from the last evaluated theme, by their color value.
 
 <sup>function signature</sup>
 ```lisp
@@ -30,7 +77,7 @@ Colorize using rainbow-mode.
 
 - - -
 
-### autothemer-generate-palette-svg [command]
+### <a id="autothemer-generate-palette-svg---options" aria-hidden="true"></a>autothemer-generate-palette-svg command
 
 Create an SVG palette image for a theme.
 
@@ -102,7 +149,7 @@ Swatch Template parameters:
 
 - - -
 
-### autothemer-generate-templates [command]
+### <a id="autothemer-generate-templates---regexp" aria-hidden="true"></a>autothemer-generate-templates command
 
 Autogenerate customizations for unthemed faces (optionally by `regexp`).
 
@@ -118,7 +165,7 @@ An error is shown when no current theme is available.
 
 - - -
 
-### autothemer-generate-templates-filtered [command]
+### <a id="autothemer-generate-templates-filtered--regexp" aria-hidden="true"></a>autothemer-generate-templates-filtered command
 
 Autogenerate customizations for unthemed faces matching `regexp`.
 
@@ -131,7 +178,7 @@ Calls `autothemer-generate-templates` after user provides `regexp` interactively
 
 - - -
 
-### autothemer-insert-color [command]
+### <a id="autothemer-insert-color-" aria-hidden="true"></a>autothemer-insert-color command
 
 Select and insert a color from the current autotheme palette.
 
@@ -142,7 +189,7 @@ Select and insert a color from the current autotheme palette.
 
 - - -
 
-### autothemer-insert-color-name [command]
+### <a id="autothemer-insert-color-name-" aria-hidden="true"></a>autothemer-insert-color-name command
 
 Select and insert a color name from the current autotheme palette.
 
@@ -153,7 +200,7 @@ Select and insert a color name from the current autotheme palette.
 
 - - -
 
-### autothemer-brightness-group
+### <a id="autothemer-brightness-group--color--brightness-groups" aria-hidden="true"></a>autothemer-brightness-group 
 
 Return the brightness group of `color`.
 Functionally identical to `autothemer-hue-groups` for brightness.
@@ -167,7 +214,7 @@ The default is `autothemer-20-percent-brightness-groups`.
 
 - - -
 
-### autothemer-color-brightness
+### <a id="autothemer-color-brightness--color" aria-hidden="true"></a>autothemer-color-brightness 
 
 Return the HSV brightness of `color` (hex color or autothemer--color struct).
 
@@ -178,7 +225,7 @@ Return the HSV brightness of `color` (hex color or autothemer--color struct).
 
 - - -
 
-### autothemer-color-hue
+### <a id="autothemer-color-hue--color" aria-hidden="true"></a>autothemer-color-hue 
 
 Return the HSV hue of `color` (hex color or autothemer--color struct).
 
@@ -189,7 +236,7 @@ Return the HSV hue of `color` (hex color or autothemer--color struct).
 
 - - -
 
-### autothemer-color-sat
+### <a id="autothemer-color-sat--color" aria-hidden="true"></a>autothemer-color-sat 
 
 Return the HSV saturation of `color` (hex color or autothemer--color struct).
 
@@ -200,7 +247,7 @@ Return the HSV saturation of `color` (hex color or autothemer--color struct).
 
 - - -
 
-### autothemer-color-to-group
+### <a id="autothemer-color-to-group--color-fn-groups" aria-hidden="true"></a>autothemer-color-to-group 
 
 Group `color` using `fn`, in `groups`.
 
@@ -211,7 +258,7 @@ Group `color` using `fn`, in `groups`.
 
 - - -
 
-### autothemer-darkest-order
+### <a id="autothemer-darkest-order--a-b" aria-hidden="true"></a>autothemer-darkest-order 
 
 Return t if the darkness of `a` > `b`.
 
@@ -222,7 +269,7 @@ Return t if the darkness of `a` > `b`.
 
 - - -
 
-### autothemer-desaturated-order
+### <a id="autothemer-desaturated-order--a-b" aria-hidden="true"></a>autothemer-desaturated-order 
 
 Return t if the saturation of `a` < `b`.
 
@@ -233,7 +280,7 @@ Return t if the saturation of `a` < `b`.
 
 - - -
 
-### autothemer-group-and-sort
+### <a id="autothemer-group-and-sort--palette-options" aria-hidden="true"></a>autothemer-group-and-sort 
 
 Group and sort `palette` using `options`.
 
@@ -253,8 +300,6 @@ Hue grouping:
 |-|-|
     | `autothemer-hue-group` | color hue group for COLOR |
 
-Builtin hue groups:
-
 | Hue Groups | Description |
 |-|-|
     | `autothemer-hue-groups` | group colors into major hue groups (default) |
@@ -265,8 +310,6 @@ Brightness grouping:
 | Function | Description |
 |-|-|
     | `autothemer-brightness-group` | brightness group for COLOR |
-
-Builtin brightness groups:
 
 | Brightness Groups | Description |
 |-|-|
@@ -279,8 +322,6 @@ Saturation grouping:
 | Function | Description |
 |-|-|
     | `autothemer-saturation-group` | saturation group for COLOR |
-
-Builtin saturation groups:
 
 | Saturation Groups | Description |
 |-|-|
@@ -309,7 +350,7 @@ to be `autothemer--color` structs.
 
 - - -
 
-### autothemer-group-colors
+### <a id="autothemer-group-colors--palette-options" aria-hidden="true"></a>autothemer-group-colors 
 
 Group `palette` colors into groups as defined in plist `options`:
 `:group-fn` - mandatory group function
@@ -322,7 +363,7 @@ Group `palette` colors into groups as defined in plist `options`:
 
 - - -
 
-### autothemer-group-sort
+### <a id="autothemer-group-sort--groups-sort-fn" aria-hidden="true"></a>autothemer-group-sort 
 
 Sort `groups` of colors using `sort-fn`.
 `groups` are produced by `autothemer-group-colors`.
@@ -334,7 +375,7 @@ Sort `groups` of colors using `sort-fn`.
 
 - - -
 
-### autothemer-groups-to-palette
+### <a id="autothemer-groups-to-palette--grouped-palette" aria-hidden="true"></a>autothemer-groups-to-palette 
 
 Flatten a `grouped-palette` from `autothemer-group-and-sort` to a single list.
 
@@ -345,7 +386,7 @@ Flatten a `grouped-palette` from `autothemer-group-and-sort` to a single list.
 
 - - -
 
-### autothemer-hex-to-rgb
+### <a id="autothemer-hex-to-rgb--hex" aria-hidden="true"></a>autothemer-hex-to-rgb 
 
 Convert `hex` to `(r g b)`.
 `r`, `g`, `b` will be values `0..65535`
@@ -357,7 +398,7 @@ Convert `hex` to `(r g b)`.
 
 - - -
 
-### autothemer-hue-group
+### <a id="autothemer-hue-group--color--hue-groups" aria-hidden="true"></a>autothemer-hue-group 
 
 Return the color hue group for `color`.
 
@@ -386,7 +427,7 @@ A hue range which crosses the apex (i.e. `360°..0°`) is permitted.
 
 - - -
 
-### autothemer-hue-order
+### <a id="autothemer-hue-order--a-b" aria-hidden="true"></a>autothemer-hue-order 
 
 Return t if the hue of `a` > `b`.
 
@@ -397,7 +438,7 @@ Return t if the hue of `a` > `b`.
 
 - - -
 
-### autothemer-lightest-order
+### <a id="autothemer-lightest-order--a-b" aria-hidden="true"></a>autothemer-lightest-order 
 
 Return t if the lightness of `a` > `b`.
 
@@ -408,7 +449,7 @@ Return t if the lightness of `a` > `b`.
 
 - - -
 
-### autothemer-saturated-order
+### <a id="autothemer-saturated-order--a-b" aria-hidden="true"></a>autothemer-saturated-order 
 
 Return t if the saturation of `a` > `b`.
 
@@ -419,7 +460,7 @@ Return t if the saturation of `a` > `b`.
 
 - - -
 
-### autothemer-saturation-group
+### <a id="autothemer-saturation-group--color--saturation-groups" aria-hidden="true"></a>autothemer-saturation-group 
 
 Return the saturation group of `color`.
 Functionally identical to `autothemer-hue-groups` for saturation.
@@ -433,19 +474,13 @@ The default is `autothemer-20-percent-saturation-groups`.
 
 - - -
 
-### autothemer-sort-palette
+### <a id="autothemer-sort-palette--theme-colors--sort-fn-group-fn-group-args" aria-hidden="true"></a>autothemer-sort-palette 
 
 Produce a list of sorted `theme-colors` using `sort-fn`.
-
 If `sort-fn` is nil, sort by default `autothemer-darkest-order`.
-
-`autothemer-lightest-order` is available to balance the force.
-
-There are also `autothemer-hue-order` and `autothemer-saturated-order`
-
 Grouping is supported via `group-fn` & `group-args`.
 
-See `autothemer-group-and-sort`.
+See `autothemer-group-and-sort` for a full list.
 
 <sup>function signature</sup>
 ```lisp
@@ -454,7 +489,7 @@ See `autothemer-group-and-sort`.
 
 - - -
 
-### autothemer--alist-to-reduced-spec [internal]
+### <a id="autothemer--alist-to-reduced-spec--facename-alist" aria-hidden="true"></a>autothemer--alist-to-reduced-spec internal
 
 Generate a reduced-spec for `facename`, based on the face attribute `alist`.
 
@@ -465,7 +500,7 @@ Generate a reduced-spec for `facename`, based on the face attribute `alist`.
 
 - - -
 
-### autothemer--approximate-spec [internal]
+### <a id="autothemer--approximate-spec--reduced-spec-theme" aria-hidden="true"></a>autothemer--approximate-spec internal
 
 Replace colors in `reduced-spec` by their closest approximations in `theme`.
 Replace every expression in `reduced-spec` that passes
@@ -480,7 +515,7 @@ unbound symbols, such as `normal` or `demibold`.
 
 - - -
 
-### autothemer--color-distance [internal]
+### <a id="autothemer--color-distance--color-autothemer-color" aria-hidden="true"></a>autothemer--color-distance internal
 
 Return the distance in rgb space between `color` and AUTOTHEMER-`color`.
 Here, `color` is an Emacs color specification and AUTOTHEMER-`color` is of
@@ -493,7 +528,7 @@ type `autothemer--color`.
 
 - - -
 
-### autothemer--color-to-hsv [internal]
+### <a id="autothemer--color-to-hsv--rgb" aria-hidden="true"></a>autothemer--color-to-hsv internal
 
 Convert `rgb`, a list of `(r g b)` to list `(h s v)`.
 The `r` `g` `b` values can range between `0..65535`.
@@ -507,7 +542,7 @@ In `(h s v)` `h`, `s` and `v` are `0.0..1.0`.
 
 - - -
 
-### autothemer--colorize-alist [internal]
+### <a id="autothemer--colorize-alist-" aria-hidden="true"></a>autothemer--colorize-alist internal
 
 Generate an alist for use with rainbow-mode.
 
@@ -524,7 +559,7 @@ Colors are from `autothemer-current-theme`.
 
 - - -
 
-### autothemer--cons-to-tree [internal]
+### <a id="autothemer--cons-to-tree--the-cons" aria-hidden="true"></a>autothemer--cons-to-tree internal
 
 Turn `the-cons` into a list, unless its cdr is `unspecified`.
 
@@ -535,7 +570,7 @@ Turn `the-cons` into a list, unless its cdr is `unspecified`.
 
 - - -
 
-### autothemer--current-theme-guard [internal]
+### <a id="autothemer--current-theme-guard-" aria-hidden="true"></a>autothemer--current-theme-guard internal
 
 Guard functions from executing when there's no current theme.
 
@@ -546,7 +581,7 @@ Guard functions from executing when there's no current theme.
 
 - - -
 
-### autothemer--demote-heads [internal]
+### <a id="autothemer--demote-heads--expr" aria-hidden="true"></a>autothemer--demote-heads internal
 
 Demote every list head within `expr` by one element.
 E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g)).
@@ -558,7 +593,7 @@ E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g)).
 
 - - -
 
-### autothemer--extract-display [internal]
+### <a id="autothemer--extract-display--palette-n" aria-hidden="true"></a>autothemer--extract-display internal
 
 Extract from `palette` display specification #`n`.
 
@@ -569,7 +604,7 @@ Extract from `palette` display specification #`n`.
 
 - - -
 
-### autothemer--extract-let-block [internal]
+### <a id="autothemer--extract-let-block--palette-n" aria-hidden="true"></a>autothemer--extract-let-block internal
 
 Extract a variable definition block from `palette` for display type `n`.
 
@@ -580,7 +615,7 @@ Extract a variable definition block from `palette` for display type `n`.
 
 - - -
 
-### autothemer--face-to-alist [internal]
+### <a id="autothemer--face-to-alist--face" aria-hidden="true"></a>autothemer--face-to-alist internal
 
 Return the attribute alist for `face` in frame (selected-frame).
 
@@ -591,7 +626,7 @@ Return the attribute alist for `face` in frame (selected-frame).
 
 - - -
 
-### autothemer--fill-empty-palette-slots [internal]
+### <a id="autothemer--fill-empty-palette-slots--palette" aria-hidden="true"></a>autothemer--fill-empty-palette-slots internal
 
 Fill empty `palette` slots so each display has all color-definitions.
 
@@ -602,7 +637,7 @@ Fill empty `palette` slots so each display has all color-definitions.
 
 - - -
 
-### autothemer--find-closest-color [internal]
+### <a id="autothemer--find-closest-color--colors-color" aria-hidden="true"></a>autothemer--find-closest-color internal
 
 Return the element of `colors` that is closest in rgb space to `color`.
 Here, `color` is an Emacs color specification and `colors` is a list
@@ -615,7 +650,7 @@ of `autothemer--color` structs.
 
 - - -
 
-### autothemer--get-color [internal]
+### <a id="autothemer--get-color--color-name" aria-hidden="true"></a>autothemer--get-color internal
 
 Return color palette object for (string) `color-name`.
 
@@ -633,7 +668,7 @@ See also `autothemer--color-p`,
 
 - - -
 
-### autothemer--pad-with-nil [internal]
+### <a id="autothemer--pad-with-nil--row-min-number-of-elements" aria-hidden="true"></a>autothemer--pad-with-nil internal
 
 Make sure that `row` has at least `min-number-of-elements`.
 Pad with nil if necessary.
@@ -645,7 +680,7 @@ Pad with nil if necessary.
 
 - - -
 
-### autothemer--reduced-spec-to-facespec [internal]
+### <a id="autothemer--reduced-spec-to-facespec--display-reduced-specs" aria-hidden="true"></a>autothemer--reduced-spec-to-facespec internal
 
 Create a face spec for `display`, with specs `reduced-specs`.
 
@@ -661,7 +696,7 @@ For example:
 
 - - -
 
-### autothemer--replace-nil-by-precursor [internal]
+### <a id="autothemer--replace-nil-by-precursor--palette-row" aria-hidden="true"></a>autothemer--replace-nil-by-precursor internal
 
 Replace nil colors in `palette-row` with their precursor.
 
@@ -686,7 +721,7 @@ Will become:
 
 - - -
 
-### autothemer--select-color [internal]
+### <a id="autothemer--select-color---prompt" aria-hidden="true"></a>autothemer--select-color internal
 
 Select a color from the current palette, optionally use `prompt`.
 Current palette is read from `autothemer-current-theme`.
@@ -704,7 +739,7 @@ See also `autothemer--color-p`,
 
 - - -
 
-### autothemer--unindent [internal]
+### <a id="autothemer--unindent--s" aria-hidden="true"></a>autothemer--unindent internal
 
 Unindent string `s` marked with | chars.
 
@@ -715,7 +750,7 @@ Unindent string `s` marked with | chars.
 
 - - -
 
-### autothemer--unthemed-faces [internal]
+### <a id="autothemer--unthemed-faces-" aria-hidden="true"></a>autothemer--unthemed-faces internal
 
 Find uncustomized faces.
 Iterate through all currently defined faces and return those that

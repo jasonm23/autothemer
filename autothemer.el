@@ -516,7 +516,7 @@ Colors are from `autothemer-current-theme'."
 (defvar autothemer--colors-font-lock-keywords nil)
 
 (defun autothemer-colorize ()
-  "Colorize using rainbow-mode."
+  "In the current buffer, colorize palette color names, from the last evaluated theme, by their color value."
   (interactive)
   (setq autothemer--colors-font-lock-keywords
       `((,(regexp-opt (mapcar 'car (autothemer--colorize-alist)) 'words)
@@ -611,16 +611,10 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
 
 (defun autothemer-sort-palette (theme-colors &optional sort-fn group-fn group-args)
   "Produce a list of sorted THEME-COLORS using SORT-FN.
-
 If SORT-FN is nil, sort by default `autothemer-darkest-order'.
-
-`autothemer-lightest-order' is available to balance the force.
-
-There are also `autothemer-hue-order' and `autothemer-saturated-order'
-
 Grouping is supported via GROUP-FN & GROUP-ARGS.
 
-See `autothemer-group-and-sort'."
+See `autothemer-group-and-sort' for a full list."
   (let ((sort-fn (or sort-fn 'autothemer-darkest-order))
         (sorted (-sort sort-fn theme-colors)))
     sorted))
@@ -757,8 +751,6 @@ Hue grouping:
     autothemer-hue-group - color hue group for COLOR
 #TABLE#
 
-Builtin hue groups:
-
 #TABLE Hue Groups - Description #
     autothemer-hue-groups - group colors into major hue groups (default)
     autothemer-simple-hue-groups - group colors into broad hue groups
@@ -769,8 +761,6 @@ Brightness grouping:
 #TABLE Function - Description #
     autothemer-brightness-group - brightness group for COLOR
 #TABLE#
-
-Builtin brightness groups:
 
 #TABLE Brightness Groups - Description #
     autothemer-dark-mid-light-brightness-groups - 3 brightness groups
@@ -783,8 +773,6 @@ Saturation grouping:
 #TABLE Function - Description #
     autothemer-saturation-group - saturation group for COLOR
 #TABLE#
-
-Builtin saturation groups:
 
 #TABLE Saturation Groups - Description #
     autothemer-low-mid-high-saturation-groups - 3 saturation groups
