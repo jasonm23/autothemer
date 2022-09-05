@@ -284,7 +284,7 @@ theme before use.
 
 You can generate a SVG image of a theme palette:
 
-![](https://raw.githubusercontent.com/emacsfodder/emacs-soothe-theme/images/soothe-palette-preview.png?cache=no)
+![](https://raw.githubusercontent.com/emacsfodder/emacs-soothe-theme/images/soothe-palette-preview.png)
 
 Using `autothemer-generate-palette-svg` interactively, emacs will ask for the relevant parameters required.  You can use `options` (a `plist`) to provide some or all of the required options. 
 
