@@ -670,7 +670,7 @@ See `autothemer-group-and-sort' for a full list."
     nil
     groups)))
 
-(defun autothemer-saturation-group (color &optional saturation-groups)
+(defun autothemer-saturation-grouping (color &optional saturation-groups)
   "Return the saturation group of COLOR.
 Functionally identical to `autothemer-hue-groups' for saturation.
 Optionally provide a list of SATURATION-GROUPS.
@@ -680,7 +680,7 @@ The default is `autothemer-20-percent-saturation-groups'."
    'autothemer-color-sat
    (or saturation-groups autothemer-20-percent-saturation-groups)))
 
-(defun autothemer-brightness-group (color &optional brightness-groups)
+(defun autothemer-brightness-grouping (color &optional brightness-groups)
   "Return the brightness group of COLOR.
 Functionally identical to `autothemer-hue-groups' for brightness.
 Optionally provide a list of BRIGHTNESS-GROUPS.
@@ -690,7 +690,7 @@ The default is `autothemer-20-percent-brightness-groups'."
    'autothemer-color-brightness
    (or brightness-groups autothemer-20-percent-brightness-groups)))
 
-(defun autothemer-hue-group (color &optional hue-groups)
+(defun autothemer-hue-grouping (color &optional hue-groups)
   "Return the color hue group for COLOR.
 
 Optionally provide a list of HUE-GROUPS.
@@ -766,7 +766,8 @@ GROUPS are produced by `autothemer-group-colors'."
                                               color))
                                 palette))
           (grouped-colors (mapcar (lambda (group) (--reduce (-flatten (cons acc (cdr it))) group))
-                                  (-group-by 'car colors-with-groups))))
+                                  (-group-by 'car colors-with-groups)))
+          (grouped-colors (-filter 'car (mapcar (lambda (group) (assoc group grouped-colors)) group-keys))))
         grouped-colors)))
 
 (defun autothemer-group-and-sort (palette options)
@@ -785,7 +786,7 @@ See color grouping functions and group lists:
 Hue grouping:
 
 #TABLE Function - Description #
-    autothemer-hue-group - color hue group for COLOR
+    autothemer-hue-grouping - color hue group for COLOR
 #TABLE#
 
 #TABLE Hue Groups - Description #
@@ -796,7 +797,7 @@ Hue grouping:
 Brightness grouping:
 
 #TABLE Function - Description #
-    autothemer-brightness-group - brightness group for COLOR
+    autothemer-brightness-grouping - brightness group for COLOR
 #TABLE#
 
 #TABLE Brightness Groups - Description #
@@ -808,7 +809,7 @@ Brightness grouping:
 Saturation grouping:
 
 #TABLE Function - Description #
-    autothemer-saturation-group - saturation group for COLOR
+    autothemer-saturation-grouping - saturation group for COLOR
 #TABLE#
 
 #TABLE Saturation Groups - Description #
@@ -874,7 +875,7 @@ supplied in OPTIONS will use defaults or prompt interactively.
     :h-space - horizontal-space between swatches (default: 10)
     :v-space - vertical-space between swatches (default: 10)
     :sort-palette - arrange palette using a function name
-    :group-swatches -  boolean
+    :visually-group-swatches - boolean (default: nil)
     :svg-out-file - the file/pathname to save SVG output
 #TABLE#
 
@@ -932,6 +933,7 @@ Swatch Template parameters:
      h-space
      v-space
      sort-palette
+     visually-group-swatches
      svg-out-file)
     options
    (let ((theme-file (or theme-file (read-file-name "Select autothemer theme .el file: "))))
@@ -977,11 +979,11 @@ Swatch Template parameters:
                          |</g>
                          |")))
 
-            (autotheme-name (autothemer--theme-name autothemer-current-theme))
-            (colors (autothemer--theme-colors autothemer-current-theme))
-            (theme-name        (or theme-name (autothemer--theme-name autothemer-current-theme)))
-            (theme-description (or theme-description (autothemer--theme-description autothemer-current-theme)))
-            (theme-url         (or theme-url (lm-homepage theme-file) (read-string "Enter theme URL: " "https://github.com/")))
+            (autotheme-name     (autothemer--theme-name autothemer-current-theme))
+            (colors             (autothemer--theme-colors autothemer-current-theme))
+            (theme-name         (or theme-name (autothemer--theme-name autothemer-current-theme)))
+            (theme-description  (or theme-description (autothemer--theme-description autothemer-current-theme)))
+            (theme-url          (or theme-url (lm-homepage theme-file) (read-string "Enter theme URL: " "https://github.com/")))
 
             (font-family        (or font-family        (read-string "Font family name: " "Helvetica Neue")))
             (swatch-width       (or swatch-width       (read-number "Swatch width: " 100)))
@@ -1012,43 +1014,44 @@ Swatch Template parameters:
                                       :sort-fn (read--expression "Sort function (TAB completion, enter nil to skip): " "'autothemer-")
                                       :group-fn (read--expression "Group function (TAB completion, enter nil to skip): " "'autothemer-")
                                       :group-args (read--expression "Group list (TAB completion, enter nil to skip): " "autothemer-"))))
-
+            (visually-group-swatches (or visually-group-swatches (y-or-n-p "Visually group swatches?")))
             (svg-out-file (or svg-out-file (read-file-name (format "Enter a Filename to save SVG palette for %s." theme-name))))
+
+            ;(svg-grouped-swatches ())
             (svg-swatches (string-join
                             (-map-indexed
-                               (lambda (index it)
-                                   (let ((color (autothemer--color-value it))
-                                         (name  (upcase
-                                                 (replace-regexp-in-string
-                                                  (concat autotheme-name "-") ""
-                                                  (format "%s" (autothemer--color-name it)))))
-                                         (x (+ page-left-margin (* (+ h-space swatch-width) (% index columns))))
-                                         (y (+ page-top-margin (* (+ v-space swatch-height) (/ index columns)))))
-                                     (format swatch-template
-                                             x
-                                             y
-                                             swatch-border-color
-                                             color
-                                             text-accent-color
-                                             name swatch-width swatch-height swatch-rotate)))
+                             (lambda (index it)
+                              (let ((color (autothemer--color-value it))
+                                    (name  (upcase (replace-regexp-in-string
+                                                    (concat autotheme-name "-") ""
+                                                    (format "%s" (autothemer--color-name it)))))
+                                    (x (+ page-left-margin (* (+ h-space swatch-width) (% index columns))))
+                                    (y (+ page-top-margin (* (+ v-space swatch-height) (/ index columns)))))
+                                 (format swatch-template
+                                         x
+                                         y
+                                         swatch-border-color
+                                         color
+                                         text-accent-color
+                                         name swatch-width swatch-height swatch-rotate)))
                              (if sort-palette
                                  (autothemer-groups-to-palette
                                   (autothemer-group-and-sort colors sort-palette))
                                colors))
                             "\n")))
-       (with-temp-file svg-out-file
-         (insert
-          (format page-template
-                  width
-                  height
-                  font-family
-                  text-color
-                  text-accent-color
-                  background-color
-                  theme-name
-                  theme-description
-                  theme-url
-                  svg-swatches)))
+          (with-temp-file svg-out-file
+            (insert
+             (format page-template
+                     width
+                     height
+                     font-family
+                     text-color
+                     text-accent-color
+                     background-color
+                     theme-name
+                     theme-description
+                     theme-url
+                     svg-swatches)))
       (message "%s generated." svg-out-file)))))
 
 (provide 'autothemer)
