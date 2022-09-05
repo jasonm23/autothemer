@@ -315,18 +315,13 @@ Pad with nil if necessary."
 (defun autothemer--replace-nil-by-precursor(palette-row)
   "Replace nil colors in PALETTE-ROW with their precursor.
 
-PALETTE-ROW is of the form `(name color [color ...])'
-
-Where  the first `color' must be non nil.
-
-Any subsequent nil color will be replaced by the previous value.
+PALETTE-ROW is of the form `(name color [color ...])' Where the
+first `color' must be non nil. Any subsequent nil color will be
+replaced by the previous value.
 
 For example:
-
      (\"red-foo\" \"#FF0000\" nil)
-
 Will become:
-
      (\"red-foo\" \"#FF0000\" \"#FF0000\")"
   (cl-assert (car palette-row))
   (let* ((color-name (car palette-row))
