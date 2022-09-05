@@ -17,6 +17,7 @@ The package also includes useful theme development features see below.
 
 We've added new things to AutoThemer in recent weeks:
 
+- Insert a face spec for a single unused face. Colors are filled using the palette color that's nearest (in CIELAB colorspace)
 - [Updates to the list of themes using autothemer](#themes-using-autothemer) (More to come...)
 - [Theme Variant Architecture/TVA](#tva) A convention for developing themes with multiple versions.
 - [Generate a cool SVG Palette image](#generate-a-svg-image-of-the-palette) Generate a cool SVG Palette image [like this one...](https://raw.githubusercontent.com/emacsfodder/emacs-theme-orangey-bits/master/palette.svg)
