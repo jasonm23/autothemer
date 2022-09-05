@@ -7,7 +7,7 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.12
+;; Version: 0.2.13
 ;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
 ;;
 ;;; License:
@@ -46,6 +46,7 @@
 (require 'cl-lib)
 (require 'dash)
 (require 'lisp-mnt)
+(require 'color)
 (require 'subr-x)
 
 (cl-defstruct
@@ -154,7 +155,9 @@ This is the default `autothemer-brightness-group'.")
 
 For example:
 
-     (autothemer--reduced-spec-to-facespec '(min-colors 60) '(button (:underline t :foreground red)))
+     (autothemer--reduced-spec-to-facespec
+        '(min-colors 60)
+        '(button (:underline t :foreground red)))
      ;; => `(button (((min-colors 60) (:underline ,t :foreground ,red))))."
   (let* ((face (elt reduced-specs 0))
          (properties (elt reduced-specs 1))
@@ -166,8 +169,9 @@ For example:
 E.g., (a (b c d) e (f g)) -> (list a (list b c d) e (list f g))."
   (if (listp expr)
       `(list ,@(mapcar
-                (lambda (it) (if (and (listp it) (not (eq (car it) 'quote)))
-                                 (autothemer--demote-heads it) it))
+                (lambda (it)
+                  (if (and (listp it) (not (eq (car it) 'quote)))
+                      (autothemer--demote-heads it) it))
                 expr))
     expr))
 
@@ -229,23 +233,34 @@ bindings within both the REDUCED-SPECS and the BODY."
                                            (elt ,face-specs ,temp-n))))))
     face-customizer))
 
-(defun autothemer--color-distance (color autothemer-color)
-  "Return the distance in rgb space between COLOR and AUTOTHEMER-COLOR.
-Here, COLOR is an Emacs color specification and AUTOTHEMER-COLOR is of
+(defun autothemer--color-distance (color palette-color)
+  "Return the distance in rgb space between COLOR and PALETTE-COLOR.
+Here, COLOR is an Emacs color specification and PALETTE-COLOR is of
 type `autothemer--color'."
+  (declare (obsolete 'autothemer--cie-de2000 "0.2.13"))
   (let ((rgb-1 (autothemer-hex-to-rgb color))
-        (rgb-2 (autothemer-hex-to-rgb (autothemer--color-value autothemer-color))))
+        (rgb-2 (autothemer-hex-to-rgb palette-color)))
     (-sum (--zip-with (abs (- it other)) rgb-1 rgb-2))))
 
+(defun autothemer-cie-de2000 (color-a color-b)
+  "Return the color distance in CIE Lab space, between COLOR-A and COLOR-B.
+Using the CIE-DE2000 algorithm."
+  (let ((lab-1 (apply 'color-srgb-to-lab (autothemer-hex-to-srgb color-a)))
+        (lab-2 (apply 'color-srgb-to-lab (autothemer-hex-to-srgb color-b))))
+     (color-cie-de2000 lab-1 lab-2)))
+
 (defun autothemer--find-closest-color (colors color)
-  "Return the element of COLORS that is closest in rgb space to COLOR.
+  "Return the element of COLORS that is closest in CIE Lab space to COLOR.
 Here, COLOR is an Emacs color specification and COLORS is a list
 of `autothemer--color' structs."
   (let ((min-distance 0)
+        (color (if (string-match-p "#[[:xdigit:]]\\{6\\}" color)
+                   color
+                 (autothemer-rgb-to-hex (color-values color))))
         (closest-color nil))
     (mapc (lambda (candidate)
             (when (color-defined-p (autothemer--color-value candidate))
-              (let ((distance (autothemer--color-distance color candidate)))
+              (let ((distance (autothemer-cie-de2000 color candidate)))
                 (if (or (not closest-color) (< distance min-distance))
                     (setq closest-color candidate
                           min-distance distance)))))
@@ -395,6 +410,18 @@ Otherwise, append NEW-COLUMN to every element of LISTS."
   (if lists (inline (-zip-with #'append lists new-column))
     new-column))
 
+(defun autothemer-insert-missing-face ()
+  "Insert a face spec template for an unthemed face.
+An approximate color from the palette will be used for
+color attributes."
+  (interactive)
+  (let ((selected (completing-read "Select an un-themed face: " (autothemer--unthemed-faces))))
+    (insert
+     (pp
+      (autothemer--approximate-spec
+       (autothemer--alist-to-reduced-spec (intern selected) (autothemer--face-to-alist (intern selected)))
+       autothemer-current-theme)))))
+
 (defun autothemer--current-theme-guard ()
   "Guard functions from executing when there's no current theme."
   (unless autothemer-current-theme
@@ -511,7 +538,7 @@ Colors are from `autothemer-current-theme'."
 (defvar autothemer--colors-font-lock-keywords nil)
 
 (defun autothemer-colorize ()
-  "In the current buffer, colorize palette color names, from the last evaluated theme, by their color value."
+  "In the current buffer, colorize palette names, from the last evaluated theme."
   (interactive)
   (setq autothemer--colors-font-lock-keywords
       `((,(regexp-opt (mapcar 'car (autothemer--colorize-alist)) 'words)
@@ -551,26 +578,40 @@ In `(h s v)' `h', `s' and `v' are `0.0..1.0'."
 (defun autothemer-hex-to-rgb (hex)
   "Convert HEX to `(r g b)'.
 `r', `g', `b' will be values `0..65535'"
-  (let ((rgb (string-to-number (substring hex 1) 16)))
-    (list
-     (* #x101 (ash (logand #xFF0000 rgb) -16))
-     (* #x101 (ash (logand #xFF00 rgb) -8))
-     (* #x101 (logand #xFF rgb)))))
+  (let* ((hex (cond ((stringp hex) hex)
+                    ((autothemer--color-p hex) (autothemer--color-value hex))))
+         (rgb (string-to-number (substring hex 1) 16)))
+     (list
+      (* #x101 (ash (logand #xFF0000 rgb) -16))
+      (* #x101 (ash (logand #xFF00 rgb) -8))
+      (* #x101 (logand #xFF rgb)))))
+
+(defun autothemer-hex-to-srgb (hex)
+  "Convert HEX to `(r g b)'.
+`r', `g', `b' will be values `0.0..1.0'"
+  (let* ((hex (cond ((stringp hex) hex)
+                  ((autothemer--color-p hex) (autothemer--color-value hex))))
+         (rgb (string-to-number (substring hex 1) 16)))
+     (list
+      (/ (ash (logand #xFF0000 rgb) -16) 255.0)
+      (/ (ash (logand #xFF00 rgb) -8) 255.0)
+      (/ (logand #xFF rgb) 255.0))))
+
+(defun autothemer-rgb-to-hex (rgb)
+  "0..65535 based RGB to hex string."
+  (eval `(format "#%02X%02X%02X" ,@(mapcar (lambda (it) (round (* 255 (/ it 65535.0)))) rgb))))
 
 (defun autothemer-color-hue (color)
   "Return the HSV hue of COLOR (hex color or autothemer--color struct)."
-  (cond ((stringp color) (car (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
-        ((autothemer--color-p color) (autothemer-color-hue (autothemer--color-value color)))))
+  (car (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
 
 (defun autothemer-color-sat (color)
   "Return the HSV saturation of COLOR (hex color or autothemer--color struct)."
-  (cond ((stringp color) (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
-        ((autothemer--color-p color) (autothemer-color-sat (autothemer--color-value color)))))
+  (cadr (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
 
 (defun autothemer-color-brightness (color)
   "Return the HSV brightness of COLOR (hex color or autothemer--color struct)."
-  (cond ((stringp color) (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
-        ((autothemer--color-p color) (autothemer-color-brightness (autothemer--color-value color)))))
+  (caddr (autothemer--color-to-hsv (autothemer-hex-to-rgb color))))
 
 ;;; Sort/Order of autothemer--color structs.
 
@@ -718,13 +759,14 @@ GROUPS are produced by `autothemer-group-colors'."
 `:group-fn' - mandatory group function
 `:group-args' - args for `group-fn'"
   (autothemer--plist-bind (group-fn group-args) options
-   (let* ((colors-with-groups (mapcar (lambda (color)
+   (let* ((group-keys (mapcar 'car group-args))
+          (colors-with-groups (mapcar (lambda (color)
                                         (list (funcall group-fn (autothemer--color-value color)
                                                        group-args)
                                               color))
                                 palette))
           (grouped-colors (mapcar (lambda (group) (--reduce (-flatten (cons acc (cdr it))) group))
-                                  (--group-by (car it) colors-with-groups))))
+                                  (-group-by 'car colors-with-groups))))
         grouped-colors)))
 
 (defun autothemer-group-and-sort (palette options)
@@ -793,13 +835,8 @@ to be `autothemer--color' structs.
    group-args
    sort-fn)
   options
-  (let* ((grouped-colors (autothemer-group-colors
-                          palette
-                          `(:group-fn ,group-fn
-                            :group-args ,group-args)))
-         (sorted-groups  (autothemer-group-sort
-                          grouped-colors
-                          sort-fn)))
+  (let* ((grouped-colors (autothemer-group-colors palette (list :group-fn (eval group-fn) :group-args (eval group-args))))
+         (sorted-groups  (autothemer-group-sort grouped-colors (eval sort-fn))))
       sorted-groups)))
 
 (defun autothemer-groups-to-palette (grouped-palette)
