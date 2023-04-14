@@ -7,7 +7,7 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.15
+;; Version: 0.2.14
 ;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
 ;;
 ;;; License:
@@ -34,8 +34,6 @@
 ;; - Generate specs for unthemed faces using the theme color palette.
 ;;   - `autothemer-generate-templates'
 ;;   - `autothemer-generate-templates-filtered' (filter by regexp)
-;;   - `autothemer-insert-missing-face'
-;;   - `autothemer-insert-missing-faces'
 ;; - Generate a palette SVG image
 ;;   - `autothemer-generate-palette-svg'
 ;; - Insert a color name or color from the active palette
@@ -64,7 +62,9 @@
   description)
 
 (defvar autothemer-current-theme nil
-  "Palette and face list for last evaluated `autothemer-deftheme'.")
+  "Internal variable of type `autothemer--theme' used by autothemer.
+Contains the color palette and the list of faces most recently
+customized using `autothemer-deftheme'.")
 
 (defvar autothemer-hue-groups
   '((red             (345 . 10))
@@ -365,50 +365,6 @@ Will become:
            collect (list (car row) (elt row (1+ n)))))
 
 ;;;###autoload
-(defun autothemer-insert-missing-face ()
-  "Insert a face spec template for an unthemed face.
-An approximate color from the palette will be used for
-color attributes."
-  (interactive)
-  (let ((selected (completing-read "Select an un-themed face: " (autothemer--unthemed-faces))))
-    (insert
-     (replace-regexp-in-string "\n" ""
-      (pp-to-string
-       (autothemer--approximate-spec
-        (autothemer--alist-to-reduced-spec (intern selected) (autothemer--face-to-alist (intern selected)))
-        autothemer-current-theme))))))
-
-;;;###autoload
-(defun autothemer-insert-missing-faces (&optional regexp)
-  "Insert face spec templates for unthemed faces matching REGEXP.
-An error is shown when no current theme is available."
-  (interactive)
-  (autothemer--current-theme-guard)
-  (let* ((regexp (or regexp
-                     (completing-read
-                      "(Match un-themed face set) Regexp: "
-                      (autothemer--unthemed-faces))))
-         (missing-faces
-          (if (null regexp)
-              (autothemer--unthemed-faces)
-            (--filter
-             (string-match-p regexp (symbol-name it))
-             (autothemer--unthemed-faces))))
-         (templates (--reduce
-                     (format "%s%s" acc it)
-                     (--map
-                      (format "%s\n"
-                              (replace-regexp-in-string
-                               "\n" ""
-                               (pp-to-string
-                                (autothemer--approximate-spec
-                                 (autothemer--alist-to-reduced-spec
-                                  it (autothemer--face-to-alist it))
-                                 autothemer-current-theme))))
-                      missing-faces))))
-    (insert templates)))
-
-;;;###autoload
 (defun autothemer-generate-templates-filtered (regexp)
   "Autogenerate customizations for unthemed faces matching REGEXP.
 
@@ -453,6 +409,18 @@ Otherwise, append NEW-COLUMN to every element of LISTS."
   (cl-assert (or (not lists) (eq (length lists) (length new-column))))
   (if lists (inline (-zip-with #'append lists new-column))
     new-column))
+
+(defun autothemer-insert-missing-face ()
+  "Insert a face spec template for an unthemed face.
+An approximate color from the palette will be used for
+color attributes."
+  (interactive)
+  (let ((selected (completing-read "Select an un-themed face: " (autothemer--unthemed-faces))))
+    (insert
+     (pp
+      (autothemer--approximate-spec
+       (autothemer--alist-to-reduced-spec (intern selected) (autothemer--face-to-alist (intern selected)))
+       autothemer-current-theme)))))
 
 (defun autothemer--current-theme-guard ()
   "Guard functions from executing when there's no current theme."
