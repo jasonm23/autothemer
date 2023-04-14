@@ -584,7 +584,6 @@ Make sure you eval all the theme's elisp files before enabling the theme.)
 - [emacsfodder/Orangey Bits](https://github.com/emacsfodder/emacs-theme-orangey-bits)
 - [emacsfodder/Cyanometric](https://github.com/emacsfodder/emacs-theme-cyanometric)
 - [emacsfodder/Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
-- [Patrick-Poitras/emacs-material-ocean](https://github.com/Patrick-Poitras/emacs-material-ocean)
 
 If you are creating themes with Autothemer, please let us know, you can add the
 theme info to README and open a pull request. If you haven't released it as a
