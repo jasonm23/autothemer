@@ -1,6 +1,6 @@
 ;; autothemer-tests.el
 
-;; Version: 0.2.15
+;; Version: 0.2.16
 
 ;;; Code:
 
