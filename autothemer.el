@@ -7,7 +7,7 @@
 ;; Maintainer: Jason Milkins <jasonm23@gmail.com>
 ;;
 ;; URL: https://github.com/jasonm23/autothemer
-;; Version: 0.2.16
+;; Version: 0.2.15
 ;; Package-Requires: ((dash "2.10.0") (emacs "26.1"))
 ;;
 ;;; License:
@@ -1085,22 +1085,6 @@ Swatch Template parameters:
                      theme-url
                      svg-swatches)))
       (message "%s generated." svg-out-file)))))
-
-(defun autothemer--locate-source ()
-  "Return the absolute file path of autothemer source.
-
-Return nil if not found."
-  (let* ((lib-file-name "autothemer.el")
-         (located-file (file-truename (locate-library "autothemer")))
-         (is-byte-compiled (string= "elc" (file-name-extension located-file)))
-         (el-name (format "%s.el" (file-name-sans-extension located-file)))
-         (located-el (file-truename (if (and is-byte-compiled (file-exists-p el-name))
-                                        el-name
-                                      located-file)))
-         (located-folder (file-name-directory located-el)))
-    (if (file-directory-p located-folder)
-        located-folder
-      nil)))
 
 (provide 'autothemer)
 ;;; autothemer.el ends here
