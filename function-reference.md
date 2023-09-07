@@ -45,6 +45,7 @@ assist with theme building, here are a few highlights...
 - [autothemer-saturated-order](#autothemer-saturated-order--a-b) 
 - [autothemer-saturation-group](#autothemer-saturation-group--color--saturation-groups) 
 - [autothemer-sort-palette](#autothemer-sort-palette--theme-colors--sort-fn-group-fn-group-args) 
+- [autothemer-let-palette](#autothemer-let-palette) 
 ### Internal Functions
 - [autothemer--alist-to-reduced-spec](#autothemer--alist-to-reduced-spec--facename-alist)
 - [autothemer--approximate-spec](#autothemer--approximate-spec--reduced-spec-theme)
@@ -485,6 +486,21 @@ See `autothemer-group-and-sort` for a full list.
 <sup>function signature</sup>
 ```lisp
 (autothemer-sort-palette (theme-colors &optional sort-fn group-fn group-args))
+```
+
+- - -
+### <a id="autothemer-let-palette"></a>autothemer-let-palette
+
+Provide a let block for `body` from `autothemer-current-theme`.
+
+Load/eval the required autothemer source (not byte-compiled) to set
+`autothemer-current-theme', before using `autothemer-let-palette`
+
+<sup>function signature</sup>
+```lisp
+;; assuming your theme has a palette color of juicy-watermelon
+(autothemer-let-palette ;;
+  (message "%s" juicy-watermelon))
 ```
 
 - - -
