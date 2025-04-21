@@ -572,19 +572,20 @@ Make sure you eval all the theme's elisp files before enabling the theme.)
 
 ### Themes using Autothemer
 
-- [greduan/Gruvbox](https://github.com/greduan/emacs-theme-gruvbox)
-- [thongpv87/Rose Pine](https://github.com/thongpv87/rose-pine-emacs)
-- [ogdenwebb/Kaolin](https://github.com/ogdenwebb/emacs-kaolin-themes)
-- [mtreca/Sorcery](https://github.com/mtreca/emacs-theme-sorcery)
-- [ajgrf/Parchment](https://github.com/ajgrf/parchment/)
-- [emacsfodder/Darktooth](https://github.com/emacsfodder/emacs-theme-darktooth)
-- [emacsfodder/Soothe](https://github.com/emacsfodder/emacs-soothe-theme)
-- [emacsfodder/Creamsody](https://github.com/emacsfodder/emacs-theme-creamsody)
-- [emacsfodder/Sakura](https://github.com/emacsfodder/emacs-theme-sakura)
-- [emacsfodder/Orangey Bits](https://github.com/emacsfodder/emacs-theme-orangey-bits)
-- [emacsfodder/Cyanometric](https://github.com/emacsfodder/emacs-theme-cyanometric)
-- [emacsfodder/Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
 - [Patrick-Poitras/emacs-material-ocean](https://github.com/Patrick-Poitras/emacs-material-ocean)
+- [ajgrf/Parchment](https://github.com/ajgrf/parchment/)
+- [ed9w2in6/wood-theme](https://github.com/ed9w2in6/wood-theme)
+- [emacsfodder/Creamsody](https://github.com/emacsfodder/emacs-theme-creamsody)
+- [emacsfodder/Cyanometric](https://github.com/emacsfodder/emacs-theme-cyanometric)
+- [emacsfodder/Darktooth](https://github.com/emacsfodder/emacs-theme-darktooth)
+- [emacsfodder/Orangey Bits](https://github.com/emacsfodder/emacs-theme-orangey-bits)
+- [emacsfodder/Sakura](https://github.com/emacsfodder/emacs-theme-sakura)
+- [emacsfodder/Soothe](https://github.com/emacsfodder/emacs-soothe-theme)
+- [emacsfodder/Vegetative](https://github.com/emacsfodder/emacs-theme-vegetative)
+- [greduan/Gruvbox](https://github.com/greduan/emacs-theme-gruvbox)
+- [mtreca/Sorcery](https://github.com/mtreca/emacs-theme-sorcery)
+- [ogdenwebb/Kaolin](https://github.com/ogdenwebb/emacs-kaolin-themes)
+- [thongpv87/Rose Pine](https://github.com/thongpv87/rose-pine-emacs)
 
 If you are creating themes with Autothemer, please let us know, you can add the
 theme info to README and open a pull request. If you haven't released it as a
