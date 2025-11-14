@@ -572,7 +572,6 @@ Make sure you eval all the theme's elisp files before enabling the theme.)
 
 ### Themes using Autothemer
 
-- [Patrick-Poitras/emacs-material-ocean](https://github.com/Patrick-Poitras/emacs-material-ocean)
 - [ajgrf/Parchment](https://github.com/ajgrf/parchment/)
 - [ed9w2in6/wood-theme](https://github.com/ed9w2in6/wood-theme)
 - [emacsfodder/Creamsody](https://github.com/emacsfodder/emacs-theme-creamsody)
@@ -585,6 +584,7 @@ Make sure you eval all the theme's elisp files before enabling the theme.)
 - [greduan/Gruvbox](https://github.com/greduan/emacs-theme-gruvbox)
 - [mtreca/Sorcery](https://github.com/mtreca/emacs-theme-sorcery)
 - [ogdenwebb/Kaolin](https://github.com/ogdenwebb/emacs-kaolin-themes)
+- [Patrick-Poitras/emacs-material-ocean](https://github.com/Patrick-Poitras/emacs-material-ocean)
 - [thongpv87/Rose Pine](https://github.com/thongpv87/rose-pine-emacs)
 
 If you are creating themes with Autothemer, please let us know, you can add the

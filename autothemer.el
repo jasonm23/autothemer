@@ -59,6 +59,7 @@
 (cl-defstruct
     autothemer--theme
   colors
+  reduced-specs
   defined-faces
   name
   description)
@@ -218,6 +219,7 @@ bindings within both the REDUCED-SPECS and the BODY."
                                         :name ,(symbol-name name)
                                         :description ,description
                                         :colors ,temp-color-structs
+					:reduced-specs ',reduced-specs
                                         :defined-faces ',face-names))))
                            (setq ,face-specs
                                  (autothemer--append-column
@@ -875,6 +877,94 @@ to be `autothemer--color' structs.
 (defun autothemer-groups-to-palette (grouped-palette)
   "Flatten a GROUPED-PALETTE from `autothemer-group-and-sort' to a single list."
   (-flatten (--map (cdr it) grouped-palette)))
+
+
+;;; Theme Tools generator...
+
+(defun autothemer--generate-theme-json ()
+  "Generate JSON for the autothemer theme with palette and faces."
+  (let* ((theme autothemer-current-theme)         ; Access the current theme (it's a variable, not a function)
+         (theme-name (autothemer--theme-name theme))  ; Extract theme name
+         (theme-description (autothemer--theme-description theme))  ; Extract description
+         (reduced-specs (autothemer--theme-reduced-specs theme)) ; Reduced specs
+         (faces-json (autothemer--generate-faces-json reduced-specs)) ; Process faces into JSON
+         (palette-json (autothemer--generate-palette-json)) ; Use the existing palette-to-JSON
+         (theme-json `((("name" . ,theme-name)
+                        ("description" . ,theme-description)
+                        ("palette" . ,palette-json)
+                        ("faces" . ,faces-json)))))
+    (json-encode theme-json)))
+
+(defun autothemer--generate-faces-json (reduced-specs)
+  "Generate the faces portion of the JSON from the reduced specs."
+  (--map
+   (let* ((face-name (symbol-name (car it)))   ; Extract the face name (as string)
+          (attrs (cdr it))                    ; Get the face attributes
+          (json-attrs (autothemer--attrs-to-json attrs))) ; Convert attributes to JSON format
+     `(("name" . ,face-name)
+       ("spec" . ,json-attrs)))
+   reduced-specs))
+
+(defun autothemer--attrs-to-json (attrs)
+  "Convert face attributes to JSON format, including handling `:inherit`."
+  (let (json-attrs)
+    (dolist (attr attrs json-attrs)
+      (let* ((key (car attr))               ; The attribute key (e.g., :foreground)
+             (val (cdr attr))               ; The attribute value (color or other)
+             (json-key (substring (symbol-name key) 1)) ; Convert symbol to string
+             (json-val (cond
+                        ((eq val t) t)        ; Convert `t` to `true`
+                        ((eq val nil) 'undefined) ; Convert `nil` to `undefined`
+                        ((symbolp val) (symbol-name val)) ; Convert symbol to string
+                        (t val))))            ; Default to the value as-is
+        (push (cons json-key json-val) json-attrs)))))
+
+(defun autothemer--generate-palette-json ()
+  "Return the current Autothemer palette as JSON in the correct format."
+  (autothemer--current-theme-guard)
+  (let* ((colors (autothemer--theme-colors autothemer-current-theme)) ; Get the theme's colors
+         (json-array
+          (--map
+           (let ((color-name (symbol-name (autothemer--color-name it))) ; Extract the color name
+                 (color-value (autothemer--color-value it))) ; Extract the color value (e.g., #ff0000)
+             `(("name" . ,color-name)  ; Structure as a JSON object
+               ("color" . ,color-value)))
+           colors)))
+    json-array))
+
+(defun autothemer-generate-palette-json (&optional options)
+  "Return the current Autothemer palette as JSON in the form:
+[
+  {\"name\": NAME, \"color\": COLOR},
+  ...
+]
+
+OPTIONS is currently unused, reserved for future extension."
+  (autothemer--current-theme-guard)
+  (let* ((colors (autothemer--theme-colors autothemer-current-theme))
+         (json-array
+          (--map
+           `(("name" . ,(symbol-name (autothemer--color-name it)))
+             ("color" . ,(autothemer--color-value it)))
+           colors)))
+    (json-encode json-array)))
+
+(defun autothemer-write-theme-json (file)
+  "Write the current Autothemer theme JSON to the given FILE."
+  (interactive "FWrite palette JSON to file: ")
+  (let ((json (autothemer--generate-theme-json)))
+    (with-temp-file file
+      (insert json))
+    (message "Theme JSON written to %s" file)))
+
+(defun autothemer-write-palette-json (file)
+  "Write the current Autothemer palette JSON to the given FILE."
+  (interactive "FWrite palette JSON to file: ")
+  (let ((json (autothemer-generate-palette-json)))
+    (with-temp-file file
+      (insert json))
+    (message "Palette JSON written to %s" file)))
+
 
 ;;; SVG Palette generator...
 
