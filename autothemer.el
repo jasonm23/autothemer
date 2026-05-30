@@ -157,8 +157,8 @@ This is the default `autothemer-brightness-group'.")
 For example:
 
      (autothemer--reduced-spec-to-facespec
-        '(min-colors 60)
-        '(button (:underline t :foreground red)))
+        \='(min-colors 60)
+        \='(button (:underline t :foreground red)))
      ;; => `(button (((min-colors 60) (:underline ,t :foreground ,red))))."
   (let* ((face (elt reduced-specs 0))
          (properties (elt reduced-specs 1))
@@ -532,8 +532,8 @@ See also `autothemer--color-p',
 
 For example:
 
-    (autothemer--plist-bind (a b c) '(:a 1 :b 2 :c 3) (list a b))
-    => '(1 2)
+    (autothemer--plist-bind (a b c) \='(:a 1 :b 2 :c 3) (list a b))
+    => \='(1 2)
 
 If PLIST is nil, ARGS are bound to BODY nil values."
   `(if (listp ,plist)
