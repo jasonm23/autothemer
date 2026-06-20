@@ -23,7 +23,7 @@ jobs:
           - snapshot
       fail-fast: false
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Emacs
       uses: purcell/setup-emacs@master
       with:
